@@ -31,16 +31,25 @@ Project: Ex4
 
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char* ip, char* port);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
+void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port);
 
 int bytes_offset_to_log_file;
-char path_to_log_file[MAX_LENGTH_OF_PATH_TO_A_FILE];
+char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
+
+char connection_succeeded_message[MAX_LENGH_OF_INPUT_FROM_USER];
+char connection_failed_message[MAX_LENGH_OF_INPUT_FROM_USER];
 
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
 	
 	bytes_offset_to_log_file = 0;
-	get_path_to_log_file(path_to_log_file, argv[3]);
-	printf("the path to file name is: %s\n", path_to_log_file);
+	get_path_to_log_file(client_log_file_name, argv[3]);
+	printf("the client_log_file_name is: %s\n", client_log_file_name);
+
+	get_connection_succeeded_and_failed_messages(connection_succeeded_message, connection_failed_message, argv[1], argv[2]);
+	printf("the connection_succeeded_message is: %s\n", connection_succeeded_message);
+	printf("the connection_failed_message is: %s\n", connection_failed_message);
+
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -115,7 +124,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 		}
 
 		else {
-
+			//WinWriteToFile(client_log_file_name,)
 			return 0;
 
 		}
@@ -141,5 +150,19 @@ void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, client_name);
 	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE,".txt");
 
+
+}
+void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port) {
+
+	
+	strcpy_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, "Connected to server on ");
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
+
+	strcpy_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, "Failed connecting to server on ");
+	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
+	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
+	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
 
 }
