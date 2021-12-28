@@ -30,6 +30,9 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Share\socket_send_recv.c">
+      <Filter>Shared Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Share\file_IO.h">
@@ -39,6 +42,9 @@
       <Filter>Shared Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Share\create_and_handle_processes.h">
+      <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Share\socket_send_recv.h">
       <Filter>Shared Header Files</Filter>
     </ClInclude>
   </ItemGroup>

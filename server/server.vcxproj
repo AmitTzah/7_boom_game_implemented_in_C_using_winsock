@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="..\Share\create_and_handle_processes.c" />
     <ClCompile Include="..\Share\file_IO.c" />
+    <ClCompile Include="..\Share\socket_send_recv.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="service_thread.c" />
   </ItemGroup>
@@ -152,6 +153,7 @@
     <ClInclude Include="..\Share\create_and_handle_processes.h" />
     <ClInclude Include="..\Share\file_IO.h" />
     <ClInclude Include="..\Share\HardCodedData.h" />
+    <ClInclude Include="..\Share\socket_send_recv.h" />
     <ClInclude Include="service_thread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
