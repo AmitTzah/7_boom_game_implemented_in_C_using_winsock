@@ -17,6 +17,6 @@
 
 #define MAX_LENGTH_OF_ROW 200
 #define THREAD_TIMEOUT_IN_MS 80
-
+#define LOCAL_HOST ""
 
 #endif
