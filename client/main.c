@@ -39,4 +39,17 @@ void main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+
+
+
+
+
+	//before exiting program
+	int result= WSACleanup();
+	if (result != NO_ERROR) {
+		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
+		exit(1);
+	}
+
+
 }
