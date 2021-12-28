@@ -8,6 +8,7 @@ Tomer Shimshi 203200480
 Project: Ex4
 */
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <stdio.h>
 #include <stddef.h>
@@ -32,24 +33,31 @@ void main(int argc, char* argv[]) {
 	// Initialize Winsock.
 	WSADATA wsaData;
 	int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
-
+	int result;
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
 		exit(1);
 	}
 
+	SOCKET m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
+	if (m_socket == INVALID_SOCKET) {
+		printf("Error at socket(): %ld\n", WSAGetLastError());
+		WSACleanup();
+		goto client_cleanup;
 
-
-
-
-	//before exiting program
-	int result= WSACleanup();
-	if (result != NO_ERROR) {
-		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
-		exit(1);
 	}
 
 
+
+	
+
+client_cleanup:
+
+
+	result = WSACleanup();
+	if (result != NO_ERROR) {
+		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
+	}
 }

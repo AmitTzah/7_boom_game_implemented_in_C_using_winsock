@@ -17,6 +17,7 @@
 
 #define MAX_LENGTH_OF_ROW 200
 #define THREAD_TIMEOUT_IN_MS 80
-#define LOCAL_HOST ""
+#define SERVER_ADDRESS_STR "127.0.0.1"
+#define SERVER_PORT 12000
 
 #endif
