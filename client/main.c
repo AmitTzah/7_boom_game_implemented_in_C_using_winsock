@@ -52,8 +52,8 @@ void main(int argc, char* argv[]) {
 
 
 	clientService.sin_family = AF_INET;
-	clientService.sin_addr.s_addr = inet_addr(SERVER_ADDRESS_STR); //Setting the IP address to connect to
-	clientService.sin_port = htons(SERVER_PORT); //Setting the port to connect to.
+	clientService.sin_addr.s_addr = inet_addr(argv[1]); //Setting the IP address to connect to
+	clientService.sin_port = htons(strtol(argv[2],NULL, 10)); //Setting the port to connect to.
 
 	/*
 		AF_INET is the Internet address family.

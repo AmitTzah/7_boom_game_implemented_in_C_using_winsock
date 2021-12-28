@@ -68,7 +68,7 @@ void main(int argc, char* argv[]) {
 
 	service.sin_family = AF_INET;
 	service.sin_addr.s_addr = Address;
-	service.sin_port = htons(SERVER_PORT); 
+	service.sin_port = htons(strtol(argv[1], NULL, 10));
 
 	// Call the bind function, passing the created socket and the sockaddr_in structure as parameters. 
 	bindRes = bind(MainSocket, (SOCKADDR*)&service, sizeof(service));
