@@ -28,6 +28,9 @@ Project: Ex4
 
 #pragma comment(lib,"WS2_32")
 
+
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char* ip, char* port);
+
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
 	
@@ -63,10 +66,17 @@ void main(int argc, char* argv[]) {
 	// Call the connect function, passing the created socket and the sockaddr_in structure as parameters. 
 	// Check for general errors.
 	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
-		printf("Failed to connect.\n");
-		goto client_cleanup;
+			
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), argv[1], argv[2])) {
+			//user chose to exit.
+			goto client_cleanup;
 
+		}
+
+		//else, reconnected!
 	}
+
+	printf("Connected to server on %s:%s\n", argv[1], argv[2]);
 
 	int bytes_sent = send(m_socket, "hi", 1+ strlen("hi"), 0);
 
@@ -76,9 +86,51 @@ void main(int argc, char* argv[]) {
 
 client_cleanup:
 
+	//reconnect_or_exit()
 
 	result = WSACleanup();
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
+}
+
+
+// trying to reconnect recursively.
+//Return 1 if user chose to Exit.
+//return 0 if Succedded to reconnect.
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char * ip, char* port) {
+	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
+
+	printf("Failed connecting to server on %s:%s.\n", ip, port);
+	printf("Choose what to do next:\n");
+	printf("1. Try to reconnect\n");
+	printf("2. Exit\n");
+	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
+	
+	if (choice[0] == '1') {
+		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
+
+			return reconnect_or_exit(m_socket, name, namelen, ip, port);
+
+		}
+
+		else {
+
+			return 0;
+
+		}
+	}
+
+	else if (choice[0] == '2') {
+
+		return 1;
+
+	}
+
+	else {
+
+		printf("Error: illegal command\n");
+		return reconnect_or_exit(m_socket, name, namelen, ip, port);
+	}
+
 }
