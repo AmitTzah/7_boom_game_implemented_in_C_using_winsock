@@ -22,6 +22,7 @@ Project: Ex4
 #include <Windows.h>
 #include <ws2tcpip.h>
 
+#include "service_thread.h"
 #include "create_and_handle_processes.h"
 #include "HardCodedData.h"
 #include "file_IO.h"
@@ -35,6 +36,9 @@ void main(int argc, char* argv[]) {
 	SOCKADDR_IN service;
 	int bindRes;
 	int ListenRes;
+
+	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
+	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -81,6 +85,47 @@ void main(int argc, char* argv[]) {
 		printf("Failed listening on socket, error %ld.\n", WSAGetLastError());
 		goto server_cleanup;
 	}
+
+	// Initialize all thread handles to NULL, to mark that they have not been initialized
+	for (int Ind = 0; Ind < NUM_OF_WORKER_THREADS; Ind++)
+		ThreadHandles[Ind] = NULL;
+
+	printf("Waiting for a client to connect...\n");
+
+	while (1)
+	{
+		SOCKET AcceptSocket = accept(MainSocket, NULL, NULL);
+		if (AcceptSocket == INVALID_SOCKET)
+		{
+			printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
+			goto server_cleanup;
+		}
+
+		printf("Client Connected.\n");
+
+		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
+
+		if (Ind == NUM_OF_WORKER_THREADS) //no slot is available
+		{
+			printf("No slots available for client, dropping the connection.\n");
+			closesocket(AcceptSocket); //Closing the socket, dropping the connection.
+		}
+		else
+		{
+			ThreadInputs[Ind] = AcceptSocket; // shallow copy: don't close 
+											  // AcceptSocket, instead close 
+											  // ThreadInputs[Ind] when the
+											  // time comes.
+			ThreadHandles[Ind] = CreateThread(
+				NULL,
+				0,
+				(LPTHREAD_START_ROUTINE)ServiceThread,
+				&(ThreadInputs[Ind]),
+				0,
+				NULL
+			);
+		}
+	} 
 
 
 

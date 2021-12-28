@@ -308,3 +308,35 @@ ReadersWritersParam create_and_init_readers_writers_param_struct(int max_num_of_
 
 }
 
+
+//Receives an array of threadHandles, assumes that unused threads are depecited as null.
+//Receives an array size, which is equal to the number of working threads.
+//if finds a thread that has finised runnin, it closes it handle.
+//returns the index of an uninitialized thread.(null) or a thread that has finished running
+
+int find_index_of_unused_thread(HANDLE* ThreadHandles, int num_of_working_threads)
+{
+	int i;
+
+	for (i = 0; i < num_of_working_threads; i++)
+	{
+		if (ThreadHandles[i] == NULL)
+			break;
+		else
+		{
+			// poll to check if thread finished running:
+			DWORD Res = WaitForSingleObject(ThreadHandles[i], 0);
+
+			if (Res == WAIT_OBJECT_0) // this thread finished running
+			{
+				CloseHandle(ThreadHandles[i]);
+				ThreadHandles[i] = NULL;
+				break;
+			}
+		}
+	}
+
+	return i;
+}
+
+

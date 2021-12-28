@@ -146,11 +146,13 @@
     <ClCompile Include="..\Share\create_and_handle_processes.c" />
     <ClCompile Include="..\Share\file_IO.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="service_thread.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Share\create_and_handle_processes.h" />
     <ClInclude Include="..\Share\file_IO.h" />
     <ClInclude Include="..\Share\HardCodedData.h" />
+    <ClInclude Include="service_thread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

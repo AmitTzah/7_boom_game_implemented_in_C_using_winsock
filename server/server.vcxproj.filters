@@ -30,6 +30,9 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="service_thread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Share\create_and_handle_processes.h">
@@ -40,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="..\Share\HardCodedData.h">
       <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="service_thread.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

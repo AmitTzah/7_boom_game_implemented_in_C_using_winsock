@@ -26,4 +26,7 @@ HANDLE* create_and_init_array_semaphore_objects(unsigned int overall_num_of_sema
 
 ReadersWritersParam create_and_init_readers_writers_param_struct(int max_num_of_readers);
 
+int find_index_of_unused_thread(HANDLE* ThreadHandles, int num_of_working_threads);
+
+
 #endif
