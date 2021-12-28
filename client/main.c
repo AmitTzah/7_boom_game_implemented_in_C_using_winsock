@@ -156,6 +156,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 
 }
 
+//Puts the correct file name format into path_to_log_file given the client name.
 void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 
 	strcpy_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, "Client_log_");
@@ -165,6 +166,7 @@ void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 
 }
 
+//Puts the correct connection_succeeded_and_failed_messages into the given array, by using the ip an port in string formats.
 void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port) {
 
 	
