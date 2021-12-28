@@ -10,7 +10,16 @@
 #include "file_IO.h"
 
 
- DWORD ServiceThread(SOCKET* t_socket) {
+DWORD ServiceThread(SOCKET* t_socket) {
+	SOCKET accept_socket = *t_socket;
+	char buffer[3];
+	int bytes_recv = recv(*t_socket, buffer, 3, 0);
+	if (bytes_recv == -1) {
 
-
+		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+	}
+	else {
+		printf("server recieved %d bytes\n", bytes_recv);
+		printf("Server recevied the string: %s\n", buffer);
+	}
 }

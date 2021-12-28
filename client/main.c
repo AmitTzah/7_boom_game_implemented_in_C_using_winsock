@@ -29,6 +29,8 @@ Project: Ex4
 #pragma comment(lib,"WS2_32")
 
 void main(int argc, char* argv[]) {
+	SOCKADDR_IN clientService;
+	
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -44,14 +46,33 @@ void main(int argc, char* argv[]) {
 
 	if (m_socket == INVALID_SOCKET) {
 		printf("Error at socket(): %ld\n", WSAGetLastError());
-		WSACleanup();
 		goto client_cleanup;
 
 	}
 
 
+	clientService.sin_family = AF_INET;
+	clientService.sin_addr.s_addr = inet_addr(SERVER_ADDRESS_STR); //Setting the IP address to connect to
+	clientService.sin_port = htons(SERVER_PORT); //Setting the port to connect to.
 
+	/*
+		AF_INET is the Internet address family.
+	*/
+
+
+	// Call the connect function, passing the created socket and the sockaddr_in structure as parameters. 
+	// Check for general errors.
+	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
+		printf("Failed to connect.\n");
+		goto client_cleanup;
+
+	}
+
+	int bytes_sent = send(m_socket, "hi", 1+ strlen("hi"), 0);
+
+	printf("Client sent: %d bytes to server\n", bytes_sent);
 	
+	while (1) {}
 
 client_cleanup:
 
