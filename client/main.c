@@ -30,10 +30,17 @@ Project: Ex4
 
 
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char* ip, char* port);
+void get_path_to_log_file(char* path_to_log_file, char* client_name);
+
+int bytes_offset_to_log_file;
+char path_to_log_file[MAX_LENGTH_OF_PATH_TO_A_FILE];
 
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
 	
+	bytes_offset_to_log_file = 0;
+	get_path_to_log_file(path_to_log_file, argv[3]);
+	printf("the path to file name is: %s\n", path_to_log_file);
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -58,13 +65,6 @@ void main(int argc, char* argv[]) {
 	clientService.sin_addr.s_addr = inet_addr(argv[1]); //Setting the IP address to connect to
 	clientService.sin_port = htons(strtol(argv[2],NULL, 10)); //Setting the port to connect to.
 
-	/*
-		AF_INET is the Internet address family.
-	*/
-
-
-	// Call the connect function, passing the created socket and the sockaddr_in structure as parameters. 
-	// Check for general errors.
 	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
 			
 		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), argv[1], argv[2])) {
@@ -97,7 +97,7 @@ client_cleanup:
 
 // trying to reconnect recursively.
 //Return 1 if user chose to Exit.
-//return 0 if Succedded to reconnect.
+//return 0 if succeeded to reconnect.
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char * ip, char* port) {
 	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
 
@@ -132,5 +132,14 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 		printf("Error: illegal command\n");
 		return reconnect_or_exit(m_socket, name, namelen, ip, port);
 	}
+
+}
+
+void get_path_to_log_file(char* path_to_log_file, char* client_name) {
+
+	strcpy_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, "Client_log_");
+	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, client_name);
+	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE,".txt");
+
 
 }
