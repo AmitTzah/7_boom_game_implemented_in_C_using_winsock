@@ -29,7 +29,7 @@ Project: Ex4
 #pragma comment(lib,"WS2_32")
 
 
-int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char* ip, char* port);
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
 void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port);
 
@@ -76,7 +76,7 @@ void main(int argc, char* argv[]) {
 
 	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
 			
-		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), argv[1], argv[2])) {
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService))) {
 			//user chose to exit.
 			goto client_cleanup;
 
@@ -85,7 +85,7 @@ void main(int argc, char* argv[]) {
 		//else, reconnected!
 	}
 
-	printf("Connected to server on %s:%s\n", argv[1], argv[2]);
+	printf("%s\n", connection_succeeded_message);
 
 	int bytes_sent = send(m_socket, "hi", 1+ strlen("hi"), 0);
 
@@ -107,10 +107,10 @@ client_cleanup:
 // trying to reconnect recursively.
 //Return 1 if user chose to Exit.
 //return 0 if succeeded to reconnect.
-int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, char * ip, char* port) {
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen) {
 	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
 
-	printf("Failed connecting to server on %s:%s.\n", ip, port);
+	printf("%s\n", connection_failed_message);
 	printf("Choose what to do next:\n");
 	printf("1. Try to reconnect\n");
 	printf("2. Exit\n");
@@ -119,7 +119,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	if (choice[0] == '1') {
 		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
 
-			return reconnect_or_exit(m_socket, name, namelen, ip, port);
+			return reconnect_or_exit(m_socket, name, namelen);
 
 		}
 
@@ -139,7 +139,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	else {
 
 		printf("Error: illegal command\n");
-		return reconnect_or_exit(m_socket, name, namelen, ip, port);
+		return reconnect_or_exit(m_socket, name, namelen);
 	}
 
 }
