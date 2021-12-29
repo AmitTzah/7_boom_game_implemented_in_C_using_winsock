@@ -7,6 +7,51 @@
 #include <string.h>
 #include <stdlib.h>
 
+//Receive bytes into a buffer of RECV_IN_CHUNKS size. After each recv, it checks if a newline character is reached.
+//This way we are guaranteed to receive the excat meseage sent, into a dynamically allcated char array.
+//*communication_message is a pointer to a heap allocated char array, whhich will be realloc as more of the message is read.
+//returns TRNS_FAILED in case recv failed. Should be checked in caller!
+//communication_message should be freed in caller.
+TransferResult_t recv_communication_message(SOCKET sd, char** communication_message) {
+	char receive_buffer[RECV_IN_CHUNKS];
+	size_t size_of_communication_message = 0;
+	do {
+		size_t  bytes_recv = recv(sd, receive_buffer, RECV_IN_CHUNKS, 0);
+
+		if (bytes_recv == -1) {
+
+			printf("Error occuerd in receving data, error num : % ld", WSAGetLastError());
+			return TRNS_FAILED;
+		}
+
+
+		size_t old_size_of_communication_message = size_of_communication_message;
+		size_of_communication_message += bytes_recv;
+		
+		*communication_message = (char*)realloc(*communication_message, size_of_communication_message);
+
+		if (*communication_message == NULL) {
+			printf("Memory allocation failed in recv_communication_message(), exiting...");
+			exit(1);
+
+		}
+
+		char* pointer_to_start_of_current_message = *communication_message + old_size_of_communication_message;
+
+		memcpy((pointer_to_start_of_current_message), receive_buffer, bytes_recv);
+
+	
+
+	} while ((*communication_message)[size_of_communication_message-1] != '\n');
+}
+
+
+
+
+
+
+
+
 /**
  * SendBuffer() uses a socket to send a buffer.
  *
@@ -44,145 +89,9 @@ TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
 	return TRNS_SUCCEEDED;
 }
 
-/**
- * SendString() uses a socket to send a string.
- * Str - the string to send.
- * sd - the socket used for communication.
- */
-TransferResult_t SendString(const char* Str, SOCKET sd)
-{
-	/* Send the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
-	TransferResult_t SendRes;
 
-	/* The request is sent in two parts. First the Length of the string (stored in
-	   an int variable ), then the string itself. */
 
-	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
 
-	SendRes = SendBuffer(
-		(const char*)(&TotalStringSizeInBytes),
-		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
-		sd);
-
-	if (SendRes != TRNS_SUCCEEDED) return SendRes;
-
-	SendRes = SendBuffer(
-		(const char*)(Str),
-		(int)(TotalStringSizeInBytes),
-		sd);
-
-	return SendRes;
-}
-
-/**
- * Accepts:
- * -------
- * ReceiveBuffer() uses a socket to receive a buffer.
- * OutputBuffer - pointer to a buffer into which data will be written
- * OutputBufferSize - size in bytes of Output Buffer
- * BytesReceivedPtr - output parameter. if function returns TRNS_SUCCEEDED, then this
- *					  will point at an int containing the number of bytes received.
- * sd - the socket used for communication.
- *
- * Returns:
- * -------
- * TRNS_SUCCEEDED - if receiving succeeded
- * TRNS_DISCONNECTED - if the socket was disconnected
- * TRNS_FAILED - otherwise
- */
-TransferResult_t ReceiveBuffer(char* OutputBuffer, int BytesToReceive, SOCKET sd)
-{
-	char* CurPlacePtr = OutputBuffer;
-	int BytesJustTransferred;
-	int RemainingBytesToReceive = BytesToReceive;
-
-	while (RemainingBytesToReceive > 0)
-	{
-		/* send does not guarantee that the entire message is sent */
-		BytesJustTransferred = recv(sd, CurPlacePtr, RemainingBytesToReceive, 0);
-		if (BytesJustTransferred == SOCKET_ERROR)
-		{
-			printf("recv() failed, error %d\n", WSAGetLastError());
-			return TRNS_FAILED;
-		}
-		else if (BytesJustTransferred == 0)
-			return TRNS_DISCONNECTED; // recv() returns zero if connection was gracefully disconnected.
-
-		RemainingBytesToReceive -= BytesJustTransferred;
-		CurPlacePtr += BytesJustTransferred; // <ISP> pointer arithmetic
-	}
-
-	return TRNS_SUCCEEDED;
-}
-
-/**
- * ReceiveString() uses a socket to receive a string, and stores it in dynamic memory.
- *
- * Accepts:
- * -------
- * OutputStrPtr - a pointer to a char-pointer that is initialized to NULL, as in:
- *
- *		char *Buffer = NULL;
- *		ReceiveString( &Buffer, ___ );
- *
- * a dynamically allocated string will be created, and (*OutputStrPtr) will point to it.
- *
- * sd - the socket used for communication.
- *
- * Returns:
- * -------
- * TRNS_SUCCEEDED - if receiving and memory allocation succeeded
- * TRNS_DISCONNECTED - if the socket was disconnected
- * TRNS_FAILED - otherwise
- */
-TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd)
-{
-	/* Recv the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
-	TransferResult_t RecvRes;
-	char* StrBuffer = NULL;
-
-	if ((OutputStrPtr == NULL) || (*OutputStrPtr != NULL))
-	{
-		printf("The first input to ReceiveString() must be "
-			"a pointer to a char pointer that is initialized to NULL. For example:\n"
-			"\tchar* Buffer = NULL;\n"
-			"\tReceiveString( &Buffer, ___ )\n");
-		return TRNS_FAILED;
-	}
-
-	/* The request is received in two parts. First the Length of the string (stored in
-	   an int variable ), then the string itself. */
-
-	RecvRes = ReceiveBuffer(
-		(char*)(&TotalStringSizeInBytes),
-		(int)(sizeof(TotalStringSizeInBytes)), // 4 bytes
-		sd);
-
-	if (RecvRes != TRNS_SUCCEEDED) return RecvRes;
-
-	StrBuffer = (char*)malloc(TotalStringSizeInBytes * sizeof(char));
-
-	if (StrBuffer == NULL)
-		return TRNS_FAILED;
-
-	RecvRes = ReceiveBuffer(
-		(char*)(StrBuffer),
-		(int)(TotalStringSizeInBytes),
-		sd);
-
-	if (RecvRes == TRNS_SUCCEEDED)
-	{
-		*OutputStrPtr = StrBuffer;
-	}
-	else
-	{
-		free(StrBuffer);
-	}
-
-	return RecvRes;
-}
 
 //returns a pointer to a heap-allocated string of the formated message, according to messeage type and parameters array.
 //the string should be freed in caller 

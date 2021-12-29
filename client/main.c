@@ -41,6 +41,7 @@ char connection_failed_message[MAX_LENGH_OF_INPUT_FROM_USER];
 
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
+	TransferResult_t send_recv_result;
 	int tried_to_reconnect = 0;
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
@@ -90,12 +91,17 @@ void main(int argc, char* argv[]) {
 		printf("%s", connection_succeeded_message);
 		write_from_offset_to_log_file += strlen(connection_succeeded_message);
 	}
-	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS] = { "TOM", "7", "END" };
-	char* messeage_to_send=format_communication_message("GAME_VIEW", parameters_array);
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	parameters_array[0] = "SERVER_NO_OPONENTS";
+	char* messeage_to_send=format_communication_message("SERVER_NO_OPONENTS", parameters_array);
 
-	int bytes_sent = send(m_socket, messeage_to_send, 1+get_size_of_communication_message(messeage_to_send), 0);
+	send_recv_result=SendBuffer(messeage_to_send, get_size_of_communication_message(messeage_to_send), m_socket);
+	if (send_recv_result == TRNS_FAILED) {
+		printf("Failed to send messeage from client!\n");
+		goto client_cleanup;
+	}
 
-	printf("Client sent: %d bytes to server\n", bytes_sent);
+	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(messeage_to_send));
 	free(messeage_to_send);
 	
 	while (1) {}
