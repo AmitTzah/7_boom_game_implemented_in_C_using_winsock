@@ -13,15 +13,12 @@
 
 
 typedef enum { TRNS_FAILED, TRNS_DISCONNECTED, TRNS_SUCCEEDED } TransferResult_t;
-
-
-
+ 
 
 TransferResult_t recv_communication_message(SOCKET sd, char** communication_message);
 
 
 TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
-
 
 
 

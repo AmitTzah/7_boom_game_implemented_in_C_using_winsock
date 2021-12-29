@@ -45,12 +45,11 @@ void main(int argc, char* argv[]) {
 	int tried_to_reconnect = 0;
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
-	printf("the client_log_file_name is: %s\n", client_log_file_name);
 
 	get_connection_succeeded_and_failed_messages(connection_succeeded_message, connection_failed_message, argv[1], argv[2]);
-	printf("the connection_succeeded_message is: %s", connection_succeeded_message);
-	printf("the connection_failed_message is: %s", connection_failed_message);
-
+	
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char* communication_message = NULL;
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -91,21 +90,28 @@ void main(int argc, char* argv[]) {
 		printf("%s", connection_succeeded_message);
 		write_from_offset_to_log_file += strlen(connection_succeeded_message);
 	}
-	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
-	parameters_array[0] = "LeonardoDeVinci";
-	parameters_array[1] = "2222222";
-	parameters_array[2] = "END";
+		parameters_array[0] = argv[3];
+		communication_message = format_communication_message("CLIENT_REQUEST", parameters_array);
 
-		char* messeage_to_send = format_communication_message("GAME_VIEW", parameters_array);
-
-	send_recv_result=SendBuffer(messeage_to_send, get_size_of_communication_message(messeage_to_send), m_socket);
+	send_recv_result=SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket);
 	if (send_recv_result == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
 		goto client_cleanup;
 	}
 
-	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(messeage_to_send));
-	free(messeage_to_send);
+	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
+	free(communication_message);
+
+	communication_message = malloc(sizeof(char));
+	if (communication_message == NULL) { printf("malloc failed in main() server"); }
+	//first get the CLIENT_REQUEST
+	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
+	{
+		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
+	}
+	printf("Client recevied message from server: %s\n", communication_message);
+
+
 	
 	while (1) {}
 

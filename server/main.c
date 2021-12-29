@@ -38,6 +38,10 @@ void main(int argc, char* argv[]) {
 	int bindRes;
 	int ListenRes;
 
+	TransferResult_t send_recv_result;
+	char* communication_message=NULL;
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 
@@ -106,13 +110,31 @@ void main(int argc, char* argv[]) {
 
 		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
 
-		if (Ind == NUM_OF_WORKER_THREADS) //no slot is available
+		// if 2 clients are already connected
+		if (Ind == NUM_OF_WORKER_THREADS) 
 		{
-			printf("No slots available for client, dropping the connection.\n");
-			closesocket(AcceptSocket); //Closing the socket, dropping the connection.
+			communication_message = malloc(sizeof(char));
+			if (communication_message == NULL) { printf("malloc failed in main() server"); goto server_cleanup;}
+			//first get the CLIENT_REQUEST
+			if (recv_communication_message(AcceptSocket, &communication_message) == TRNS_FAILED)
+			{
+				printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+				goto server_cleanup;
+			}
+			free(communication_message);
+			//send back SERVER_DENIED
+			communication_message = format_communication_message("SERVER_DENIED", parameters_array);
+			send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket);
+			if (send_recv_result == TRNS_FAILED) {
+				printf("Failed to send messeage from client!\n");
+				goto server_cleanup;
+			}
+			free(communication_message);
+			
 		}
 		else
 		{
+
 			ThreadInputs[Ind] = AcceptSocket; // shallow copy: don't close 
 											  // AcceptSocket, instead close 
 											  // ThreadInputs[Ind] when the
