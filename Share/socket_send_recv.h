@@ -28,5 +28,7 @@ TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd);
 
 char* format_communication_message(const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]);
 
+int get_size_of_communication_message(char* communication_message);
+
 
 #endif

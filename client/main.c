@@ -21,7 +21,7 @@ Project: Ex4
 #include <Windows.h>
 #include <ws2tcpip.h>
 
-
+#include "socket_send_recv.h"
 #include "create_and_handle_processes.h"
 #include "HardCodedData.h"
 #include "file_IO.h"
@@ -90,10 +90,13 @@ void main(int argc, char* argv[]) {
 		printf("%s", connection_succeeded_message);
 		write_from_offset_to_log_file += strlen(connection_succeeded_message);
 	}
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS] = { "TOM", "7", "END" };
+	char* messeage_to_send=format_communication_message("GAME_VIEW", parameters_array);
 
-	int bytes_sent = send(m_socket, "hi", 1+ strlen("hi"), 0);
+	int bytes_sent = send(m_socket, messeage_to_send, 1+get_size_of_communication_message(messeage_to_send), 0);
 
 	printf("Client sent: %d bytes to server\n", bytes_sent);
+	free(messeage_to_send);
 	
 	while (1) {}
 
