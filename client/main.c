@@ -92,8 +92,11 @@ void main(int argc, char* argv[]) {
 		write_from_offset_to_log_file += strlen(connection_succeeded_message);
 	}
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
-	parameters_array[0] = "SERVER_NO_OPONENTS";
-	char* messeage_to_send=format_communication_message("SERVER_NO_OPONENTS", parameters_array);
+	parameters_array[0] = "LeonardoDeVinci";
+	parameters_array[1] = "2222222";
+	parameters_array[2] = "END";
+
+		char* messeage_to_send = format_communication_message("GAME_VIEW", parameters_array);
 
 	send_recv_result=SendBuffer(messeage_to_send, get_size_of_communication_message(messeage_to_send), m_socket);
 	if (send_recv_result == TRNS_FAILED) {
