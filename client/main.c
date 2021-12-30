@@ -32,6 +32,8 @@ Project: Ex4
 void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message, char* ip, char* port);
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int server_denied_message);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
+int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name);
+
 
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
@@ -41,16 +43,13 @@ char connection_failed_message[MAX_LENGH_OF_INPUT_FROM_USER];
 char server_denied_message[MAX_LENGH_OF_INPUT_FROM_USER];
 
 void main(int argc, char* argv[]) {
-	SOCKADDR_IN clientService;
-	
-	int tried_to_reconnect = 0;
+
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
 
 	get_connection_succeeded_and_failed_and_server_denied_messages(connection_succeeded_message, connection_failed_message, server_denied_message, argv[1], argv[2]);
-	
-	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
-	char* communication_message = NULL;
+
+
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -70,61 +69,32 @@ void main(int argc, char* argv[]) {
 
 	}
 
+	//
 
-	clientService.sin_family = AF_INET;
-	clientService.sin_addr.s_addr = inet_addr(argv[1]); //Setting the IP address to connect to
-	clientService.sin_port = htons(strtol(argv[2],NULL, 10)); //Setting the port to connect to.
-
-	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
-		tried_to_reconnect = 1;
-		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService),0,0)) {
-			//user chose to exit.
-			goto client_cleanup;
-
-		}
-
-		//else, reconnected!
-	}
-
-	if (tried_to_reconnect != 1) {
-		WinWriteToFile(client_log_file_name, connection_succeeded_message, strlen(connection_succeeded_message), write_from_offset_to_log_file);
-		printf("%s", connection_succeeded_message);
-		write_from_offset_to_log_file += strlen(connection_succeeded_message);
-	}
-
-	//send CLIENT_REQUEST
-	parameters_array[0] = argv[3];
-	communication_message = format_communication_message(CLIENT_REQUEST, parameters_array);
-	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket)== TRNS_FAILED) {
-		printf("Failed to send messeage from client!\n");
+	if (0 == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
+		//failed to connect
 		goto client_cleanup;
 	}
 
-	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
-	free(communication_message);
+	//SERVER_APPROVED!
 
-	// recv SERVER_DENIED or SERVER_APPROVED
-	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
-	{
-		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
-		goto client_cleanup;
+	
+	// recv main menu message
+	 /*
+	//if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
+	//{
+	//	printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+	//}
 
-	}
-	 printf("Client recevied message from server: %s\n", communication_message);
+	//free(communication_message);
 
-	 //if server denied
-	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
-		 
-		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
-			//user chose to exit.
-			goto client_cleanup;
+	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
+	printf("Choose what to do next:\n");
+	printf("1. Play against another client\n");
+	printf("2. Quit\n");
+	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
 
-		}
-		//else user reconnected
-	}
-
-
-	//SERVER_APPROVED
+	*/
 	//enter_game_loop()
 
 	
@@ -141,6 +111,72 @@ client_cleanup:
 	}
 }
 
+//sends client request to server and receives a response (denied or approved)
+//returns 0 if fails acutely or user chooses to exit, in that case goto client_cleanup in caller
+int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name) {
+	int tried_to_reconnect = 0;
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char* communication_message = NULL;
+	SOCKADDR_IN clientService;
+
+	clientService.sin_family = AF_INET;
+	clientService.sin_addr.s_addr = inet_addr(ip); //Setting the IP address to connect to
+	clientService.sin_port = htons(strtol(port, NULL, 10)); //Setting the port to connect to.
+
+	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
+		tried_to_reconnect = 1;
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 0)) {
+			//user chose to exit.
+			return 0;
+
+		}
+
+		//else, reconnected!
+	}
+
+	if (tried_to_reconnect != 1) {
+		WinWriteToFile(client_log_file_name, connection_succeeded_message, strlen(connection_succeeded_message), write_from_offset_to_log_file);
+		printf("%s", connection_succeeded_message);
+		write_from_offset_to_log_file += strlen(connection_succeeded_message);
+	}
+
+	//send CLIENT_REQUEST
+	parameters_array[0] = user_name;
+	communication_message = format_communication_message(CLIENT_REQUEST, parameters_array);
+	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
+		printf("Failed to send messeage from client!\n");
+		return 0;
+	}
+
+	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
+	free(communication_message);
+
+	// recv SERVER_DENIED or SERVER_APPROVED
+	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
+	{
+		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
+		return 0;
+
+	}
+	printf("Client recevied message from server: %s\n", communication_message);
+
+	//if server denied
+	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
+
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
+			//user chose to exit.
+			return 0;
+
+		}
+		//else user reconnected
+	}
+
+	free(communication_message);
+
+	//SERVER_APPROVED!
+	return 1;
+
+}
 
 // trying to reconnect recursively.
 // if illegal_command=1, then the function was called user entered a wrong input, and connection failed messeage won't be print to screen and file.

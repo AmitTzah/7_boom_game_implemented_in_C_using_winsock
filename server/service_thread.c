@@ -40,5 +40,16 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	}
 	free(communication_message);
 
+	//send main menu message to client
+	/*
+	communication_message = format_communication_message(SERVER_MAIN_MENU, parameters_array);
+	send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket);
+	if (send_recv_result == TRNS_FAILED) {
+		printf("Failed to send messeage from client!\n");
+
+	}
+	free(communication_message);
+
+	*/
 	while(1){}
 }
