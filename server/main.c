@@ -101,7 +101,7 @@ void main(int argc, char* argv[]) {
 	{
 		SOCKET AcceptSocket = accept(MainSocket, NULL, NULL);
 		if (AcceptSocket == INVALID_SOCKET)
-		{
+		{	
 			printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
 			goto server_cleanup;
 		}
@@ -130,6 +130,8 @@ void main(int argc, char* argv[]) {
 				goto server_cleanup;
 			}
 			free(communication_message);
+
+			closesocket(AcceptSocket);
 			
 		}
 		else

@@ -29,15 +29,17 @@ Project: Ex4
 #pragma comment(lib,"WS2_32")
 
 
-int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command);
+void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message, char* ip, char* port);
+
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int server_denied_message);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
-void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port);
 
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 
 char connection_succeeded_message[MAX_LENGH_OF_INPUT_FROM_USER];
 char connection_failed_message[MAX_LENGH_OF_INPUT_FROM_USER];
+char server_denied_message[MAX_LENGH_OF_INPUT_FROM_USER];
 
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
@@ -46,7 +48,7 @@ void main(int argc, char* argv[]) {
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
 
-	get_connection_succeeded_and_failed_messages(connection_succeeded_message, connection_failed_message, argv[1], argv[2]);
+	get_connection_succeeded_and_failed_and_server_denied_messages(connection_succeeded_message, connection_failed_message, server_denied_message, argv[1], argv[2]);
 	
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char* communication_message = NULL;
@@ -76,7 +78,7 @@ void main(int argc, char* argv[]) {
 
 	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
 		tried_to_reconnect = 1;
-		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService),0)) {
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService),0,0)) {
 			//user chose to exit.
 			goto client_cleanup;
 
@@ -104,14 +106,29 @@ void main(int argc, char* argv[]) {
 
 	communication_message = malloc(sizeof(char));
 	if (communication_message == NULL) { printf("malloc failed in main() server"); }
-	//first get the CLIENT_REQUEST
+
+
 	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
 	}
 	printf("Client recevied message from server: %s\n", communication_message);
 
+	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
+		 
+		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
+			//user chose to exit.
+			goto client_cleanup;
 
+		}
+		//else user reconnected
+	}
+
+	else {
+		//SERVER_APPROVED
+
+		//enter_game_loop()
+	}
 	
 	while (1) {}
 
@@ -128,15 +145,29 @@ client_cleanup:
 
 // trying to reconnect recursively.
 // if illegal_command=1, then the function was called user entered a wrong input, and connection failed messeage won't be print to screen and file.
+// if server_denied_message=1 the message for server denied will by printed.
 //Return 1 if user chose to Exit.
 //return 0 if succeeded to reconnect.
-int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command) {
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int is_server_denied_message) {
 	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
 
 	if (illegal_command == 0) {
-		printf("%s", connection_failed_message);
-		WinWriteToFile(client_log_file_name, connection_failed_message, strlen(connection_failed_message), write_from_offset_to_log_file);
-		write_from_offset_to_log_file += strlen(connection_failed_message);
+		if (is_server_denied_message == 0) {
+			//print and write to file the connction failed message
+
+			printf("%s", connection_failed_message);
+			WinWriteToFile(client_log_file_name, connection_failed_message, strlen(connection_failed_message), write_from_offset_to_log_file);
+			write_from_offset_to_log_file += strlen(connection_failed_message);
+		}
+
+		else {
+
+			//print and write to file the server denied message
+			printf("%s", server_denied_message);
+			WinWriteToFile(client_log_file_name, server_denied_message, strlen(server_denied_message), write_from_offset_to_log_file);
+			write_from_offset_to_log_file += strlen(server_denied_message);
+
+		}
 	}
 	printf("Choose what to do next:\n");
 	printf("1. Try to reconnect\n");
@@ -146,7 +177,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	if (choice[0] == '1') {
 		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
 
-			return reconnect_or_exit(m_socket, name, namelen,0);
+			return reconnect_or_exit(m_socket, name, namelen,0,0);
 
 		}
 
@@ -169,7 +200,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	else {
 
 		printf("Error: illegal command\n");
-		return reconnect_or_exit(m_socket, name, namelen,1);
+		return reconnect_or_exit(m_socket, name, namelen,1,0);
 	}
 
 }
@@ -185,7 +216,7 @@ void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 }
 
 //Puts the correct connection_succeeded_and_failed_messages into the given array, by using the ip an port in string formats.
-void get_connection_succeeded_and_failed_messages(char* connection_succeeded_message, char* connection_failed_message, char* ip, char* port) {
+void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message,char* ip, char* port) {
 
 	
 	strcpy_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, "Connected to server on ");
@@ -201,4 +232,12 @@ void get_connection_succeeded_and_failed_messages(char* connection_succeeded_mes
 	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
 	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, "\n");
 
+	strcpy_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, "Server on ");
+	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
+	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
+	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
+	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, " denied the connection request.\n");
+
+
 }
+

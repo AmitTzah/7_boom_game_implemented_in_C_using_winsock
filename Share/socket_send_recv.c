@@ -43,6 +43,8 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 	
 
 	} while ((*communication_message)[size_of_communication_message-1] != '\n');
+
+	return TRNS_SUCCEEDED;
 }
 
 
@@ -181,4 +183,23 @@ int get_size_of_communication_message(char* communication_message) {
 	}
 
 	return (j + 1);
+}
+
+
+//based on https://stackoverflow.com/questions/27495346/compraring-char-array-without-using-strcmp-in-c/27495579
+//similar to strcom. This function compares two char arrays, that are messeage-formated (ending in newline instead of null terminator)
+//return 1 if equal. else 0
+int compare_messages(char* array1, char* array2)
+{
+	if ((array1 == NULL) || (array2 == NULL)) {
+		printf("Passed a null array to comapre messages!\n");
+		return 0;
+	}
+		
+	while ((*array1 != '\n') && (*array2 != '\n') && (*array1 == *array2))
+	{
+		array1++;
+		array2++;
+	}
+	return (*array1 == *array2);
 }

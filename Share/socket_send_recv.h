@@ -26,5 +26,8 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 
 int get_size_of_communication_message(char* communication_message);
 
+int compare_messages(char* array1, char* array2);
+
+
 
 #endif
