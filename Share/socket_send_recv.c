@@ -279,3 +279,30 @@ void extract_parameters_from_communication_message(char* communication_message, 
 		parameters_array[parameter_index][j] = '\0';
 	}
 }
+
+//this function should be called after the caller finished working with the arguments of extract_parameters_from_communication_message()
+void free_communication_message_type_and_parameters(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
+	int num_of_parameters = 0;
+	if (strcmp(messeage_type, "GAME_VIEW") == 0) {
+
+		num_of_parameters = 3;
+
+	}
+
+	if (strcmp(messeage_type, "CLIENT_PLAYER_MOVE") == 0 || strcmp(messeage_type, "CLIENT_REQUEST") == 0 ||
+		strcmp(messeage_type, "TURN_SWITCH") == 0 || strcmp(messeage_type, "GAME_ENDED") == 0) {
+
+		num_of_parameters = 1;
+	}
+
+	
+
+	for (int i = 0; i < num_of_parameters; i++) {
+
+		free(parameters_array[i]);
+	}
+	free(communication_message);
+	
+
+
+}

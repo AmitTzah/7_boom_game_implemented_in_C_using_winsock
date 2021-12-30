@@ -17,6 +17,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 	TransferResult_t send_recv_result;
 
 	//first get the CLIENT_REQUEST
@@ -25,8 +26,10 @@ DWORD ServiceThread(SOCKET* t_socket) {
 		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
 	}
 	printf("server recevied message from client: %s\n", communication_message);
-	//get_parameter_array_from_messsage()
-	free(communication_message);
+	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
+	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
+	
+	free_communication_message_type_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
 	communication_message = format_communication_message("SERVER_APPROVED", parameters_array);
