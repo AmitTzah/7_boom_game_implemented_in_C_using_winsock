@@ -94,7 +94,7 @@ void main(int argc, char* argv[]) {
 
 	//send CLIENT_REQUEST
 	parameters_array[0] = argv[3];
-	communication_message = format_communication_message("CLIENT_REQUEST", parameters_array);
+	communication_message = format_communication_message(CLIENT_REQUEST, parameters_array);
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket)== TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
 		goto client_cleanup;
@@ -127,16 +127,6 @@ void main(int argc, char* argv[]) {
 	//SERVER_APPROVED
 	//enter_game_loop()
 
-	//testing
-	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
-	parameters_array[0] = "boom";
-	
-	communication_message = format_communication_message("SERVER_NO_OPONENTS", parameters_array);
-	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
-	printf("Extracted message type is: %s\n", message_type);
-	//	printf("Extracted prameters are: %s\n", parameters_array[0]);
-
-	///end testing
 	
 	
 	while (1) {}

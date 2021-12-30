@@ -29,10 +29,10 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
 	
-	free_communication_message_type_and_parameters(communication_message, parameters_array, message_type);
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
-	communication_message = format_communication_message("SERVER_APPROVED", parameters_array);
+	communication_message = format_communication_message(SERVER_APPROVED, parameters_array);
 	send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket);
 	if (send_recv_result == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");

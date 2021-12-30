@@ -122,7 +122,7 @@ void main(int argc, char* argv[]) {
 			free(communication_message);
 
 			//send back SERVER_DENIED
-			communication_message = format_communication_message("SERVER_DENIED", parameters_array);
+			communication_message = format_communication_message(SERVER_DENIED, parameters_array);
 			send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket);
 			if (send_recv_result == TRNS_FAILED) {
 				printf("Failed to send messeage from client!\n");

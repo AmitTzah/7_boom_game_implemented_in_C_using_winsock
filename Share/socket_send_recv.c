@@ -109,9 +109,9 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 	char* communication_message = NULL;
 	int size_of_communication_message = 0;
 	//check if message has three parameters.
-	if (strcmp(messeage_type, "GAME_VIEW") == 0) {
+	if (strcmp(messeage_type, GAME_VIEW) == 0) {
 		size_of_communication_message += 5; //semicolons, colons,newline char , nullterminator for easier use in printf.
-		size_of_communication_message += strlen("GAME_VIEW");
+		size_of_communication_message += strlen(GAME_VIEW);
 		for (int j = 0; j < MAX_NUM_OF_MESSAGE_PARAMETERS; j++) {
 			size_of_communication_message += strlen(parameters_array[j]);
 		}
@@ -125,7 +125,7 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 
 		else {
 
-			strcpy_s(communication_message, size_of_communication_message, "GAME_VIEW");
+			strcpy_s(communication_message, size_of_communication_message, GAME_VIEW);
 			strcat_s(communication_message, size_of_communication_message, ":");
 			strcat_s(communication_message, size_of_communication_message, parameters_array[0]);
 			strcat_s(communication_message, size_of_communication_message, ";");
@@ -139,8 +139,8 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 
 
 	//check if message has only one parameter
-	else if (strcmp(messeage_type, "CLIENT_PLAYER_MOVE") == 0 || strcmp(messeage_type, "CLIENT_REQUEST") == 0 ||
-		strcmp(messeage_type, "TURN_SWITCH") == 0 || strcmp(messeage_type, "GAME_ENDED") == 0) {
+	else if (strcmp(messeage_type, CLIENT_PLAYER_MOVE) == 0 || strcmp(messeage_type, CLIENT_REQUEST) == 0 ||
+		strcmp(messeage_type, TURN_SWITCH) == 0 || strcmp(messeage_type, GAME_ENDED) == 0) {
 
 		size_of_communication_message += 3;//colons,newline char , nullterminator for easier use in printf.
 		size_of_communication_message += strlen(parameters_array[0]);
@@ -281,16 +281,16 @@ void extract_parameters_from_communication_message(char* communication_message, 
 }
 
 //this function should be called after the caller finished working with the arguments of extract_parameters_from_communication_message()
-void free_communication_message_type_and_parameters(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
+void free_communication_message_and_parameters(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
 	int num_of_parameters = 0;
-	if (strcmp(messeage_type, "GAME_VIEW") == 0) {
+	if (strcmp(messeage_type, GAME_VIEW) == 0) {
 
 		num_of_parameters = 3;
 
 	}
 
-	if (strcmp(messeage_type, "CLIENT_PLAYER_MOVE") == 0 || strcmp(messeage_type, "CLIENT_REQUEST") == 0 ||
-		strcmp(messeage_type, "TURN_SWITCH") == 0 || strcmp(messeage_type, "GAME_ENDED") == 0) {
+	if (strcmp(messeage_type, CLIENT_PLAYER_MOVE) == 0 || strcmp(messeage_type, CLIENT_REQUEST) == 0 ||
+		strcmp(messeage_type, TURN_SWITCH) == 0 || strcmp(messeage_type, GAME_ENDED) == 0) {
 
 		num_of_parameters = 1;
 	}
