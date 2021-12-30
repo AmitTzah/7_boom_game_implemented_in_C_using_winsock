@@ -16,6 +16,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char client_name[MAX_LENGH_OF_CLIENT_NAME];
 	TransferResult_t send_recv_result;
 
 	//first get the CLIENT_REQUEST

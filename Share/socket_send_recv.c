@@ -211,3 +211,71 @@ int compare_messages(char* array1, char* array2)
 	}
 	return (*array1 == *array2);
 }
+
+//reverse of format_communication_message()
+//given a communication_message, it  extracts the parameters and message type into the appropriate  arguments IN THE FORM OF STRINGS!.
+//messeage_type should be stack-allocated in caller, using the max lengh of a message type (which is known pre compilation).
+//parameters array elements will be allocated on heap, should be freed in caller!
+void extract_parameters_from_communication_message(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
+	int i = 0;
+	int size_of_parameter = 0;
+	int parameter_index = 0;
+	while (communication_message[i] != ':' && communication_message[i] != '\n') {
+		i++;
+	}
+
+	int j = 0;
+	//copy meesage to message_type
+	while (j != i) {
+
+		messeage_type[j] = communication_message[j];
+		j++;
+	}
+	messeage_type[j] = '\0';
+
+	
+	if (communication_message[i] == ':') {
+	//message has parameters!
+	//extract parameters into parameters_array. Remember to free parameters_array in caller.
+
+		while (communication_message[i] != '\n') {
+
+			if (communication_message[i] == ';' || communication_message[i] == ':') {
+				size_of_parameter = 0;
+				if (communication_message[i] == ';') {
+					parameters_array[parameter_index][j] = '\0'; 
+					parameter_index++;
+				};
+				
+
+				j = i + 1;
+				//get size_of_parameter
+				while (communication_message[j] != ';' && communication_message[j]!='\n') {
+					j++;
+					size_of_parameter++;
+
+				}
+			}
+			i=i+1;
+			j = 0;
+			parameters_array[parameter_index] = malloc((1+size_of_parameter) * sizeof(char)); //+1 for null terminator
+			if (parameters_array[parameter_index] == NULL) {
+
+				printf("Memory allocation failed in extract_parameters_from_communication_message()\n");
+				exit(1);
+			}
+			while (communication_message[i] != ';' && communication_message[i] != '\n') {
+				parameters_array[parameter_index][j] = communication_message[i];
+
+				i++;
+				j++;
+			}
+
+
+
+		}
+
+
+		parameters_array[parameter_index][j] = '\0';
+	}
+}

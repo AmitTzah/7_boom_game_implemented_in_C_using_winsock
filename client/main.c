@@ -30,7 +30,6 @@ Project: Ex4
 
 
 void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message, char* ip, char* port);
-
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int server_denied_message);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
 
@@ -127,6 +126,17 @@ void main(int argc, char* argv[]) {
 
 	//SERVER_APPROVED
 	//enter_game_loop()
+
+	//testing
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+	parameters_array[0] = "boom";
+	
+	communication_message = format_communication_message("SERVER_NO_OPONENTS", parameters_array);
+	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
+	printf("Extracted message type is: %s\n", message_type);
+	//	printf("Extracted prameters are: %s\n", parameters_array[0]);
+
+	///end testing
 	
 	
 	while (1) {}
