@@ -9,11 +9,19 @@
 
 //Receive bytes into a buffer of RECV_IN_CHUNKS size. After each recv, it checks if a newline character is reached.
 //This way we are guaranteed to receive the excat meseage sent, into a dynamically allcated char array.
-//*communication_message is a pointer to a heap allocated char array, whhich will be realloc as more of the message is read.
+//*communication_message is a pointer to  char array.
 //returns TRNS_FAILED in case recv failed. Should be checked in caller!
 //communication_message should be freed in caller.
 TransferResult_t recv_communication_message(SOCKET sd, char** communication_message) {
 	char receive_buffer[RECV_IN_CHUNKS];
+	*communication_message = malloc(sizeof(char));
+	if (*communication_message == NULL) {
+
+		printf("malloc failed in recv_communication_message()\n"); 
+
+		return TRNS_FAILED;
+	}
+
 	size_t size_of_communication_message = 0;
 	do {
 		size_t  bytes_recv = recv(sd, receive_buffer, RECV_IN_CHUNKS, 0);
@@ -32,7 +40,7 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 
 		if (*communication_message == NULL) {
 			printf("Memory allocation failed in recv_communication_message(), exiting...");
-			exit(1);
+			return TRNS_FAILED;
 
 		}
 

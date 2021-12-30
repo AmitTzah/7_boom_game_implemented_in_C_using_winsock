@@ -14,12 +14,10 @@
 DWORD ServiceThread(SOCKET* t_socket) {
 	SOCKET accept_socket = *t_socket;
 
-	char* communication_message = malloc(sizeof(char));
+	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	TransferResult_t send_recv_result;
 
-	communication_message = malloc(sizeof(char));
-	if (communication_message == NULL) { printf("malloc failed in main() server");  }
 	//first get the CLIENT_REQUEST
 	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
 	{
@@ -27,8 +25,8 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	}
 	printf("server recevied message from client: %s\n", communication_message);
 	//get_parameter_array_from_messsage()
-
 	free(communication_message);
+
 	//send back SERVER_APPROVED
 	communication_message = format_communication_message("SERVER_APPROVED", parameters_array);
 	send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket);

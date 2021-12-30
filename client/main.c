@@ -104,13 +104,11 @@ void main(int argc, char* argv[]) {
 	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
 	free(communication_message);
 
-	communication_message = malloc(sizeof(char));
-	if (communication_message == NULL) { printf("malloc failed in main() server"); }
-
-
 	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
+		goto client_cleanup;
+
 	}
 	printf("Client recevied message from server: %s\n", communication_message);
 

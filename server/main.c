@@ -113,8 +113,6 @@ void main(int argc, char* argv[]) {
 		// if 2 clients are already connected
 		if (Ind == NUM_OF_WORKER_THREADS) 
 		{
-			communication_message = malloc(sizeof(char));
-			if (communication_message == NULL) { printf("malloc failed in main() server"); goto server_cleanup;}
 			//first get the CLIENT_REQUEST
 			if (recv_communication_message(AcceptSocket, &communication_message) == TRNS_FAILED)
 			{
@@ -122,6 +120,7 @@ void main(int argc, char* argv[]) {
 				goto server_cleanup;
 			}
 			free(communication_message);
+
 			//send back SERVER_DENIED
 			communication_message = format_communication_message("SERVER_DENIED", parameters_array);
 			send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket);
