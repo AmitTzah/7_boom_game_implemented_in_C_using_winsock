@@ -43,7 +43,7 @@ char server_denied_message[MAX_LENGH_OF_INPUT_FROM_USER];
 
 void main(int argc, char* argv[]) {
 	SOCKADDR_IN clientService;
-	TransferResult_t send_recv_result;
+	
 	int tried_to_reconnect = 0;
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
@@ -92,11 +92,11 @@ void main(int argc, char* argv[]) {
 		printf("%s", connection_succeeded_message);
 		write_from_offset_to_log_file += strlen(connection_succeeded_message);
 	}
-		parameters_array[0] = argv[3];
-		communication_message = format_communication_message("CLIENT_REQUEST", parameters_array);
 
-	send_recv_result=SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket);
-	if (send_recv_result == TRNS_FAILED) {
+	//send CLIENT_REQUEST
+	parameters_array[0] = argv[3];
+	communication_message = format_communication_message("CLIENT_REQUEST", parameters_array);
+	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket)== TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
 		goto client_cleanup;
 	}
@@ -104,14 +104,16 @@ void main(int argc, char* argv[]) {
 	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
 	free(communication_message);
 
+	// recv SERVER_DENIED or SERVER_APPROVED
 	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
 		goto client_cleanup;
 
 	}
-	printf("Client recevied message from server: %s\n", communication_message);
+	 printf("Client recevied message from server: %s\n", communication_message);
 
+	 //if server denied
 	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
 		 
 		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
@@ -122,11 +124,10 @@ void main(int argc, char* argv[]) {
 		//else user reconnected
 	}
 
-	else {
-		//SERVER_APPROVED
 
-		//enter_game_loop()
-	}
+	//SERVER_APPROVED
+	//enter_game_loop()
+	
 	
 	while (1) {}
 
