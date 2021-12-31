@@ -118,6 +118,8 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 	if (compare_messages(message_type, "CLIENT_DISCONNECT\n") == 1) {
 
 		closesocket(accept_socket);
+		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
 		return ERROR_CODE;
 	}
 

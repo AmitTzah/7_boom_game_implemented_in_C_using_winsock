@@ -109,20 +109,22 @@ void main(int argc, char* argv[]) {
 		printf("Client Connected.\n");
 
 		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
+		char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
 		// if 2 clients are already connected
 		if (Ind == NUM_OF_WORKER_THREADS)
 		{
 			//first get the CLIENT_REQUEST
-			if (recv_communication_message(AcceptSocket, &communication_message) == TRNS_FAILED)
-			{
-				printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
-				goto server_cleanup;
+			if (ERROR_CODE == recv_and_extract_communication_message(AcceptSocket, &communication_message, message_type, parameters_array)) {
+
+				return ERROR_CODE;
+
 			}
+			
 
-			printf("server recevied message from client: %s\n", communication_message);
+			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
-			free(communication_message);
+
 
 			//send back SERVER_DENIED
 			if (ERROR_CODE == format_communication_message(SERVER_DENIED, parameters_array, &communication_message)) {
