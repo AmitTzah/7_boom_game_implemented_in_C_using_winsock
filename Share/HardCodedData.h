@@ -16,14 +16,14 @@
 //project specific constants
 
 
-#define THREAD_TIMEOUT_IN_MS 80
+
 #define SERVER_ADDRESS_STR "127.0.0.1"
 #define NUM_OF_WORKER_THREADS 2
-#define MAX_LENGH_OF_INPUT_FROM_USER 200
-#define MAX_NUM_OF_MESSAGE_PARAMETERS 3
+#define MAX_LENGH_OF_IP_PORT_MESSAGES 200 //known in compile time!
+#define MAX_NUM_OF_MESSAGE_PARAMETERS 3 //known in compile time!
 #define RECV_IN_CHUNKS 1 //has to be 1, since two messages can be sent one after the other, and in that case we have to assure we don't skip the first '\n'
 #define MAX_LENGH_OF_CLIENT_NAME 20
-#define MAX_LENGH_OF_MESSAGE_TYPE 50
+#define MAX_LENGH_OF_MESSAGE_TYPE 50 //known in compile time!
 
 //messages types
 #define CLIENT_REQUEST "CLIENT_REQUEST"

@@ -38,9 +38,9 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 
-char connection_succeeded_message[MAX_LENGH_OF_INPUT_FROM_USER];
-char connection_failed_message[MAX_LENGH_OF_INPUT_FROM_USER];
-char server_denied_message[MAX_LENGH_OF_INPUT_FROM_USER];
+char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
+char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
+char server_denied_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 
 void main(int argc, char* argv[]) {
 
@@ -173,7 +173,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 //returns 0 after sending CLIENT_VERSUS(chossing to play).
 int server_main_menue(SOCKET m_socket, int illegal_command) {
 	char* communication_message = NULL;
-	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
+	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 
 	// recv main menu message
@@ -192,7 +192,7 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 	printf("Choose what to do next:\n");
 	printf("1. Play against another client\n");
 	printf("2. Quit\n");
-	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
+	fgets(choice, MAX_LENGH_OF_IP_PORT_MESSAGES, stdin);
 
 	if (choice[0] == '1') {
 		//send CLIENT_VERSUS
@@ -237,7 +237,7 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 //Return 1 if user chose to Exit.
 //return 0 if succeeded to reconnect.
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int is_server_denied_message) {
-	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
+	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
 
 	if (illegal_command == 0) {
 		if (is_server_denied_message == 0) {
@@ -260,7 +260,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	printf("Choose what to do next:\n");
 	printf("1. Try to reconnect\n");
 	printf("2. Exit\n");
-	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
+	fgets(choice, MAX_LENGH_OF_IP_PORT_MESSAGES, stdin);
 	
 	if (choice[0] == '1') {
 		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
@@ -307,24 +307,24 @@ void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message,char* ip, char* port) {
 
 	
-	strcpy_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, "Connected to server on ");
-	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
-	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
-	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
-	strcat_s(connection_succeeded_message, MAX_LENGH_OF_INPUT_FROM_USER, "\n");
+	strcpy_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "Connected to server on ");
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ip);
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ":");
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, port);
+	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "\n");
 
 
-	strcpy_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, "Failed connecting to server on ");
-	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
-	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
-	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
-	strcat_s(connection_failed_message, MAX_LENGH_OF_INPUT_FROM_USER, "\n");
+	strcpy_s(connection_failed_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "Failed connecting to server on ");
+	strcat_s(connection_failed_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ip);
+	strcat_s(connection_failed_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ":");
+	strcat_s(connection_failed_message, MAX_LENGH_OF_IP_PORT_MESSAGES, port);
+	strcat_s(connection_failed_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "\n");
 
-	strcpy_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, "Server on ");
-	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, ip);
-	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, ":");
-	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, port);
-	strcat_s(server_denied_message, MAX_LENGH_OF_INPUT_FROM_USER, " denied the connection request.\n");
+	strcpy_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "Server on ");
+	strcat_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ip);
+	strcat_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ":");
+	strcat_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, port);
+	strcat_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, " denied the connection request.\n");
 
 
 }
