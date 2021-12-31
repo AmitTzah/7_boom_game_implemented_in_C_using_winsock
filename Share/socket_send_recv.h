@@ -22,7 +22,7 @@ TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
 
 
 
-char* format_communication_message(const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]);
+int format_communication_message(const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char** communication_message);
 
 int get_size_of_communication_message(char* communication_message);
 

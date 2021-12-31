@@ -1,4 +1,4 @@
-//includes functions and structs related to operation of a worker thread(which is project specific). Each thread handles a row from the input file.
+//includes functions and structs related to operation of a worker thread(which is project specific). 
 
 
 #include <stdbool.h>
@@ -60,12 +60,14 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
 
-	printf("server received from  client %s", communication_message);
-
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
-	communication_message = format_communication_message(SERVER_APPROVED, parameters_array);
+	if (ERROR_CODE == format_communication_message(SERVER_APPROVED, parameters_array, &communication_message)) {
+		//memory allocation failed in format_communication_message()
+
+		return ERROR_CODE;
+	}
 	
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
@@ -90,7 +92,12 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 
 	//send main menu message to client
-	communication_message = format_communication_message(SERVER_MAIN_MENU, parameters_array);
+	if (ERROR_CODE == format_communication_message(SERVER_MAIN_MENU, parameters_array, &communication_message)) {
+		//memory allocation failed in format_communication_message()
+
+		return ERROR_CODE;
+
+	}
 	
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");

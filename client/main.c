@@ -37,6 +37,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
+int server_main_menu(SOCKET m_socket, int illegal_command);
 
 char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
@@ -78,7 +79,7 @@ void main(int argc, char* argv[]) {
 
 	//SERVER_APPROVED!
 	//get main menu
-	if (ERROR_CODE== server_main_menue(m_socket, 0)) {
+	if (ERROR_CODE== server_main_menu(m_socket, 0)) {
 		//Chose to quit or some api function failed.
 		goto client_cleanup;
 	}
@@ -131,7 +132,11 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 	//send CLIENT_REQUEST
 	parameters_array[0] = user_name;
-	communication_message = format_communication_message(CLIENT_REQUEST, parameters_array);
+
+	if (ERROR_CODE == format_communication_message(CLIENT_REQUEST, parameters_array, &communication_message)) {
+		return ERROR_CODE;
+	}
+	 
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
 		return ERROR_CODE;
@@ -171,7 +176,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 //Recv main_menu from client
 //returns ERROR_CODE if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
 //returns 0 after sending CLIENT_VERSUS(chossing to play).
-int server_main_menue(SOCKET m_socket, int illegal_command) {
+int server_main_menu(SOCKET m_socket, int illegal_command) {
 	char* communication_message = NULL;
 	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -196,7 +201,10 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 
 	if (choice[0] == '1') {
 		//send CLIENT_VERSUS
-		communication_message = format_communication_message(CLIENT_VERSUS, parameters_array);
+
+		if (ERROR_CODE == format_communication_message(CLIENT_VERSUS, parameters_array, &communication_message)) {
+			return ERROR_CODE;
+		}
 		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 			printf("Failed to send messeage from client!\n");
 			return ERROR_CODE;
@@ -211,7 +219,9 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 	else if (choice[0] == '2') {
 
 		//send CLIENT_DISCONNECT
-		communication_message = format_communication_message(CLIENT_DISCONNECT, parameters_array);
+		if (ERROR_CODE == format_communication_message(CLIENT_DISCONNECT, parameters_array, &communication_message)){
+				return ERROR_CODE;
+		}
 		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 			printf("Failed to send messeage from client!\n");
 			return ERROR_CODE;
@@ -225,7 +235,7 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 	else {
 
 		printf("Error: illegal command\n");
-		return server_main_menue(m_socket, 1);
+		return server_main_menu(m_socket, 1);
 	}
 }
 

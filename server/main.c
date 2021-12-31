@@ -111,7 +111,7 @@ void main(int argc, char* argv[]) {
 		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
 
 		// if 2 clients are already connected
-		if (Ind == NUM_OF_WORKER_THREADS) 
+		if (Ind == NUM_OF_WORKER_THREADS)
 		{
 			//first get the CLIENT_REQUEST
 			if (recv_communication_message(AcceptSocket, &communication_message) == TRNS_FAILED)
@@ -125,7 +125,10 @@ void main(int argc, char* argv[]) {
 			free(communication_message);
 
 			//send back SERVER_DENIED
-			communication_message = format_communication_message(SERVER_DENIED, parameters_array);
+			if (ERROR_CODE == format_communication_message(SERVER_DENIED, parameters_array, &communication_message)) {
+				goto server_cleanup;
+
+			}
 			send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket);
 			if (send_recv_result == TRNS_FAILED) {
 				printf("Failed to send messeage from client!\n");

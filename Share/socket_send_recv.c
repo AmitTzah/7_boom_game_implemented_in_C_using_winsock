@@ -103,10 +103,11 @@ TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
 
 
 
-//returns a pointer to a heap-allocated string of the formated message, according to messeage type and parameters array.
+//Construct message into communication_message which is a heap-allocated string. Formated according to messeage type and parameters array.
 //the string should be freed in caller 
-char* format_communication_message(const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
-	char* communication_message = NULL;
+//if memory allocation fails, returns ERROR_CODE, this should be checked and handled in caller!
+int format_communication_message(const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char** communication_message) {
+	
 	int size_of_communication_message = 0;
 	//check if message has three parameters.
 	if (strcmp(messeage_type, GAME_VIEW) == 0) {
@@ -116,23 +117,23 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 			size_of_communication_message += strlen(parameters_array[j]);
 		}
 
-		communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
-		if (communication_message == NULL) {
+		*communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
+		if (*communication_message == NULL) {
 			printf("Memory allocation failed in format_communication_message(), exiting...");
-			exit(1);
+			return ERROR_CODE;
 
 		}
 
 		else {
 
-			strcpy_s(communication_message, size_of_communication_message, GAME_VIEW);
-			strcat_s(communication_message, size_of_communication_message, ":");
-			strcat_s(communication_message, size_of_communication_message, parameters_array[0]);
-			strcat_s(communication_message, size_of_communication_message, ";");
-			strcat_s(communication_message, size_of_communication_message, parameters_array[1]);
-			strcat_s(communication_message, size_of_communication_message, ";");
-			strcat_s(communication_message, size_of_communication_message, parameters_array[2]);
-			strcat_s(communication_message, size_of_communication_message, "\n");
+			strcpy_s(*communication_message, size_of_communication_message, GAME_VIEW);
+			strcat_s(*communication_message, size_of_communication_message, ":");
+			strcat_s(*communication_message, size_of_communication_message, parameters_array[0]);
+			strcat_s(*communication_message, size_of_communication_message, ";");
+			strcat_s(*communication_message, size_of_communication_message, parameters_array[1]);
+			strcat_s(*communication_message, size_of_communication_message, ";");
+			strcat_s(*communication_message, size_of_communication_message, parameters_array[2]);
+			strcat_s(*communication_message, size_of_communication_message, "\n");
 
 		}
 	}
@@ -146,40 +147,40 @@ char* format_communication_message(const char* messeage_type, char* parameters_a
 		size_of_communication_message += strlen(parameters_array[0]);
 		size_of_communication_message += strlen(messeage_type);
 
-		communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
-		if (communication_message == NULL) {
+		*communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
+		if (*communication_message == NULL) {
 			printf("Memory allocation failed in format_communication_message(), exiting...");
-			exit(1);
+			return ERROR_CODE;
 
 		}
 
 		else {
-			strcpy_s(communication_message, size_of_communication_message, messeage_type);
-			strcat_s(communication_message, size_of_communication_message, ":");
-			strcat_s(communication_message, size_of_communication_message, parameters_array[0]);
-			strcat_s(communication_message, size_of_communication_message, "\n");
+			strcpy_s(*communication_message, size_of_communication_message, messeage_type);
+			strcat_s(*communication_message, size_of_communication_message, ":");
+			strcat_s(*communication_message, size_of_communication_message, parameters_array[0]);
+			strcat_s(*communication_message, size_of_communication_message, "\n");
 		}
 	}
 
 	//message has no parameters.
 	else {
 		size_of_communication_message += strlen(messeage_type) + 2;
-		communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
-		if (communication_message == NULL) {
+		*communication_message = (char*)calloc(size_of_communication_message, sizeof(char));
+		if (*communication_message == NULL) {
 			printf("Memory allocation failed in format_communication_message(), exiting...");
-			exit(1);
+			return ERROR_CODE;
 
 		}
 
 		else {
-			strcpy_s(communication_message, size_of_communication_message, messeage_type);
-			strcat_s(communication_message, size_of_communication_message, "\n");
+			strcpy_s(*communication_message, size_of_communication_message, messeage_type);
+			strcat_s(*communication_message, size_of_communication_message, "\n");
 		}
 
 	}
 
 
-	return communication_message;
+	return 0;
 }
 
 int get_size_of_communication_message(char* communication_message) {

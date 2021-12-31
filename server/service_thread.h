@@ -1,4 +1,4 @@
-//includes functions and structs related to operation of a worker thread(which is project specific). Each thread handles a row from the input file.
+//includes functions and structs related to operation of a worker thread(which is project specific). 
 
 #ifndef SERVICE_THREAD_H
 #define SERVICE_THREAD_H
