@@ -135,18 +135,11 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	//send CLIENT_REQUEST
 	parameters_array[0] = user_name;
 
-	if (ERROR_CODE == format_communication_message(CLIENT_REQUEST, parameters_array, &communication_message)) {
+	if (ERROR_CODE == send_message(m_socket, CLIENT_REQUEST, parameters_array)) {
 		return ERROR_CODE;
-	}
-	 
-	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
-		printf("Failed to send messeage from client!\n");
-		return ERROR_CODE;
+
 	}
 
-	printf("Client sent: %s", communication_message);
-	free(communication_message);
-	
 	// recv SERVER_DENIED or SERVER_APPROVED
 	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
 
@@ -203,17 +196,11 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 
 	if (choice[0] == '1') {
 		//send CLIENT_VERSUS
+		if (ERROR_CODE == send_message(m_socket, CLIENT_VERSUS, parameters_array)) {
+			return ERROR_CODE;
 
-		if (ERROR_CODE == format_communication_message(CLIENT_VERSUS, parameters_array, &communication_message)) {
-			return ERROR_CODE;
-		}
-		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
-			printf("Failed to send messeage from client!\n");
-			return ERROR_CODE;
 		}
 
-		printf("Client sent: %s",communication_message);
-		free(communication_message);
 		return 0;
 
 	}
@@ -221,16 +208,12 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	else if (choice[0] == '2') {
 
 		//send CLIENT_DISCONNECT
-		if (ERROR_CODE == format_communication_message(CLIENT_DISCONNECT, parameters_array, &communication_message)){
-				return ERROR_CODE;
-		}
-		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
-			printf("Failed to send messeage from client!\n");
+
+		if (ERROR_CODE == send_message(m_socket, CLIENT_DISCONNECT, parameters_array)) {
 			return ERROR_CODE;
+
 		}
 
-		printf("Client sent: %s", communication_message);
-		free(communication_message);
 		return ERROR_CODE;
 	}
 

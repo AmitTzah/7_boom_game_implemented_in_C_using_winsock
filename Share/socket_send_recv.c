@@ -348,3 +348,27 @@ int recv_and_extract_communication_message(SOCKET sd, char** communication_messa
 
 	return SUCCESS_CODE;
 }
+
+
+//Top wrapper sender function
+//it formats the message according to given arguments, sends it.
+//if memory allocation or an api function fail, it returns ERROR_CODE.
+int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
+
+	char* communication_message = NULL;
+	if (ERROR_CODE == format_communication_message(messeage_type, parameters_array,& communication_message)) {
+		return ERROR_CODE;
+	}
+
+	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), sd) == TRNS_FAILED) {
+		printf("Failed to send messeage from client!\n");
+		return ERROR_CODE;
+	}
+
+	printf("Sent message: %s", communication_message);
+	//TODO: replace printf with write to log file
+	free(communication_message);
+
+	return(SUCCESS_CODE);
+
+}

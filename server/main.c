@@ -38,7 +38,6 @@ void main(int argc, char* argv[]) {
 	int bindRes;
 	int ListenRes;
 
-	TransferResult_t send_recv_result;
 	char* communication_message=NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 
@@ -117,7 +116,7 @@ void main(int argc, char* argv[]) {
 			//first get the CLIENT_REQUEST
 			if (ERROR_CODE == recv_and_extract_communication_message(AcceptSocket, &communication_message, message_type, parameters_array)) {
 
-				return ERROR_CODE;
+				goto server_cleanup;
 
 			}
 			
@@ -127,19 +126,12 @@ void main(int argc, char* argv[]) {
 
 
 			//send back SERVER_DENIED
-			if (ERROR_CODE == format_communication_message(SERVER_DENIED, parameters_array, &communication_message)) {
+
+			if (ERROR_CODE == send_message(AcceptSocket, SERVER_DENIED, parameters_array)) {
 				goto server_cleanup;
 
 			}
-			send_recv_result = SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket);
-			if (send_recv_result == TRNS_FAILED) {
-				printf("Failed to send messeage from client!\n");
-				goto server_cleanup;
-			}
 
-			printf("server sent to client %s", communication_message);
-
-			free(communication_message);
 
 			closesocket(AcceptSocket);
 			

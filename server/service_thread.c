@@ -61,20 +61,11 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
-	if (ERROR_CODE == format_communication_message(SERVER_APPROVED, parameters_array, &communication_message)) {
-		//memory allocation failed in format_communication_message()
 
-		return ERROR_CODE;
-	}
-	
-	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
-		printf("Failed to send messeage from client!\n");
+	if (ERROR_CODE == send_message(accept_socket, SERVER_APPROVED, parameters_array)) {
 		return ERROR_CODE;
 
 	}
-	printf("server sent to client %s", communication_message);
-
-	free(communication_message);
 
 	return 0;
 
@@ -90,20 +81,11 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 
 	//send main menu message to client
-	if (ERROR_CODE == format_communication_message(SERVER_MAIN_MENU, parameters_array, &communication_message)) {
-		//memory allocation failed in format_communication_message()
 
+	if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array)) {
 		return ERROR_CODE;
 
 	}
-	
-	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
-		printf("Failed to send messeage from client!\n");
-		return ERROR_CODE;
-
-
-	}
-	printf("server sent to client %s", communication_message);
 
 
 	//recv CLIENT_DISCONNECT or CLIENT_VERSUS
