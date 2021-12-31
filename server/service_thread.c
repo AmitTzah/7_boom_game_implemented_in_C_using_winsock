@@ -19,20 +19,19 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
 	
-	if (approve_client_request(accept_socket, client_name) == 0) {
+	if (approve_client_request(accept_socket, client_name) == ERROR_CODE) {
 
-		return 0;
+		return ERROR_CODE;
 	}
 	
-	if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket) == 0) {
+	if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket) == ERROR_CODE) {
 
-		return 0;
+		return ERROR_CODE;
 	}
 
 
 	//Connected with a second player!
 	// enter game_loop
-
 	server_game_loop(accept_socket, client_name);
 
 
@@ -44,7 +43,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 }
 
 //get client request, extract username into the argument client_name, send back SERVER_APPROVED.
-//if some api api function fails, return 0, otherwise 1. 
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
 int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -54,7 +53,7 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
-		return 0;
+		return ERROR_CODE;
 
 	}
 	printf("server recevied message from client: %s\n", communication_message);
@@ -70,19 +69,20 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
-		return 0;
+		return ERROR_CODE;
 
 	}
 	printf("server sent to client %s", communication_message);
 
 	free(communication_message);
 
-	return 1;
+	return 0;
 
 }
 
 
 
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
 int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -94,7 +94,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 	
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), accept_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
-		return 0;
+		return ERROR_CODE;
 
 
 	}
@@ -105,7 +105,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
-		return 0;
+		return ERROR_CODE;
 
 	}
 	printf("server recevied message from client: %s\n", communication_message);
@@ -116,12 +116,12 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 		closesocket(accept_socket);
 
-		return 0;
+		return ERROR_CODE;
 
 	}
 	free(communication_message);
 
-	return 1;
+	return 0;
 }
 
 int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {

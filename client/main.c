@@ -58,7 +58,7 @@ void main(int argc, char* argv[]) {
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
-		exit(1);
+		goto client_cleanup;
 	}
 
 	SOCKET m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -71,14 +71,14 @@ void main(int argc, char* argv[]) {
 
 	
 	//Attempt to connect with server
-	if (0 == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
+	if (ERROR_CODE == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
 		//failed to connect or server denied
 		goto client_cleanup;
 	}
 
 	//SERVER_APPROVED!
 	//get main menu
-	if (0 == server_main_menue(m_socket, 0)) {
+	if (ERROR_CODE== server_main_menue(m_socket, 0)) {
 		//Chose to quit or some api function failed.
 		goto client_cleanup;
 	}
@@ -93,15 +93,15 @@ void main(int argc, char* argv[]) {
 client_cleanup:
 
 	
-	closesocket(m_socket);
 	result = WSACleanup();
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
+
 }
 
 //sends client request to server and receives a response (denied or approved)
-//returns 0 if fails acutely or user chooses to exit, in that case goto client_cleanup in caller
+//returns ERROR_CODE if fails acutely or user chooses to exit, in that case goto client_cleanup in caller
 int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name) {
 	int tried_to_reconnect = 0;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -116,7 +116,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 		tried_to_reconnect = 1;
 		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 0)) {
 			//user chose to exit.
-			return 0;
+			return ERROR_CODE;
 
 		}
 
@@ -134,7 +134,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	communication_message = format_communication_message(CLIENT_REQUEST, parameters_array);
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 		printf("Failed to send messeage from client!\n");
-		return 0;
+		return ERROR_CODE;
 	}
 
 	printf("Client sent: %s", communication_message);
@@ -144,7 +144,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
 	{
 		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
-		return 0;
+		return ERROR_CODE;
 
 	}
 	
@@ -155,7 +155,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
 			//user chose to exit.
-			return 0;
+			return ERROR_CODE;
 
 		}
 		//else user reconnected
@@ -164,13 +164,13 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	free(communication_message);
 
 	//SERVER_APPROVED!
-	return 1;
+	return 0;
 
 }
 
 //Recv main_menu from client
-//returns 0 if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
-//returns 1 after sending CLIENT_VERSUS(chossing to play).
+//returns ERROR_CODE if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
+//returns 0 after sending CLIENT_VERSUS(chossing to play).
 int server_main_menue(SOCKET m_socket, int illegal_command) {
 	char* communication_message = NULL;
 	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
@@ -183,6 +183,7 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 		if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
 		{
 			printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+			return ERROR_CODE;
 		}
 	}
 	printf("client recieved from server : % s", communication_message);
@@ -198,12 +199,12 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 		communication_message = format_communication_message(CLIENT_VERSUS, parameters_array);
 		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 			printf("Failed to send messeage from client!\n");
-			return 0;
+			return ERROR_CODE;
 		}
 
 		printf("Client sent: %s",communication_message);
 		free(communication_message);
-		return 1;
+		return 0;
 
 	}
 
@@ -213,12 +214,12 @@ int server_main_menue(SOCKET m_socket, int illegal_command) {
 		communication_message = format_communication_message(CLIENT_DISCONNECT, parameters_array);
 		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
 			printf("Failed to send messeage from client!\n");
-			return 0;
+			return ERROR_CODE;
 		}
 
 		printf("Client sent: %s", communication_message);
 		free(communication_message);
-		return 0;
+		return ERROR_CODE;
 	}
 
 	else {
