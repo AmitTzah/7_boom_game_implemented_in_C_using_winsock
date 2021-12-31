@@ -69,33 +69,22 @@ void main(int argc, char* argv[]) {
 
 	}
 
-	//
-
+	
+	//Attempt to connect with server
 	if (0 == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
-		//failed to connect
+		//failed to connect or server denied
 		goto client_cleanup;
 	}
 
 	//SERVER_APPROVED!
-
+	//get main menu
+	if (0 == server_main_menue(m_socket, 0)) {
+		//Chose to quit or some api function failed.
+		goto client_cleanup;
+	}
 	
-	// recv main menu message
-	 /*
-	//if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
-	//{
-	//	printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
-	//}
-
-	//free(communication_message);
-
-	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
-	printf("Choose what to do next:\n");
-	printf("1. Play against another client\n");
-	printf("2. Quit\n");
-	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
-
-	*/
-	//enter_game_loop()
+	//Chose to play! 
+	//enter game_loop()
 
 	
 	
@@ -103,7 +92,7 @@ void main(int argc, char* argv[]) {
 
 client_cleanup:
 
-	//reconnect_or_exit()
+	
 
 	result = WSACleanup();
 	if (result != NO_ERROR) {
@@ -148,7 +137,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 		return 0;
 	}
 
-	printf("Client sent: %d bytes to server\n", get_size_of_communication_message(communication_message));
+	printf("Client sent: %s", communication_message);
 	free(communication_message);
 
 	// recv SERVER_DENIED or SERVER_APPROVED
@@ -158,7 +147,8 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 		return 0;
 
 	}
-	printf("Client recevied message from server: %s\n", communication_message);
+	
+	printf("Client recevied message from server: %s", communication_message);
 
 	//if server denied
 	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
@@ -177,6 +167,68 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	return 1;
 
 }
+
+//Recv main_menu from client
+//returns 0 if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
+//returns 1 after sending CLIENT_VERSUS(chossing to play).
+int server_main_menue(SOCKET m_socket, int illegal_command) {
+	char* communication_message = NULL;
+	char choice[MAX_LENGH_OF_INPUT_FROM_USER];
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+
+	// recv main menu message
+	if (illegal_command != 1) {
+		
+		printf("client waiting for main menue message...\n");
+		if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
+		{
+			printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+		}
+	}
+	printf("client recieved from server : % s", communication_message);
+	free(communication_message);
+
+	printf("Choose what to do next:\n");
+	printf("1. Play against another client\n");
+	printf("2. Quit\n");
+	fgets(choice, MAX_LENGH_OF_INPUT_FROM_USER, stdin);
+
+	if (choice[0] == '1') {
+		//send CLIENT_VERSUS
+		communication_message = format_communication_message(CLIENT_VERSUS, parameters_array);
+		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
+			printf("Failed to send messeage from client!\n");
+			return 0;
+		}
+
+		printf("Client sent: %s",communication_message);
+		free(communication_message);
+		return 1;
+
+	}
+
+	else if (choice[0] == '2') {
+
+		//send CLIENT_DISCONNECT
+		communication_message = format_communication_message(CLIENT_DISCONNECT, parameters_array);
+		if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), m_socket) == TRNS_FAILED) {
+			printf("Failed to send messeage from client!\n");
+			return 0;
+		}
+
+		printf("Client sent: %s", communication_message);
+		free(communication_message);
+		return 0;
+	}
+
+	else {
+
+		printf("Error: illegal command\n");
+		return server_main_menue(m_socket, 1);
+	}
+}
+
+
 
 // trying to reconnect recursively.
 // if illegal_command=1, then the function was called user entered a wrong input, and connection failed messeage won't be print to screen and file.

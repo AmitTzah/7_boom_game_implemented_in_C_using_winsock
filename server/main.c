@@ -128,6 +128,9 @@ void main(int argc, char* argv[]) {
 				printf("Failed to send messeage from client!\n");
 				goto server_cleanup;
 			}
+
+			printf("server sent to client %s", communication_message);
+
 			free(communication_message);
 
 			closesocket(AcceptSocket);

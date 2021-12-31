@@ -21,7 +21,7 @@
 #define NUM_OF_WORKER_THREADS 2
 #define MAX_LENGH_OF_INPUT_FROM_USER 200
 #define MAX_NUM_OF_MESSAGE_PARAMETERS 3
-#define RECV_IN_CHUNKS 5
+#define RECV_IN_CHUNKS 1 //has to be 1, since two messages can be sent one after the other, and in that case we have to assure we don't skip the first '\n'
 #define MAX_LENGH_OF_CLIENT_NAME 20
 #define MAX_LENGH_OF_MESSAGE_TYPE 50
 
