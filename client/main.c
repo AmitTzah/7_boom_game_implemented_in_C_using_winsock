@@ -84,7 +84,7 @@ void main(int argc, char* argv[]) {
 		goto client_cleanup;
 	}
 	
-	//Chose to play! 
+	//Received game_started	
 	//enter game_loop()
 
 	
@@ -201,7 +201,31 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 
 		}
 
-		return 0;
+		//receive GAME_STARTED or server_no_opponents
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+			return ERROR_CODE;
+
+		}
+
+		if (compare_messages(message_type, GAME_STARTED) == 1) {
+			//found another player, go to game loop.
+			return SUCCESS_CODE;
+
+		}
+
+		//Received SERVER_NO_OPPONENTS
+		else {
+			//GET main menue again
+			if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+				return ERROR_CODE;
+
+			}
+
+			return server_main_menu(m_socket, 1);
+		}
+
 
 	}
 

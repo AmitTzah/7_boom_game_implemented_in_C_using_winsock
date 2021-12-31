@@ -6,14 +6,17 @@
 #include <stdlib.h>
 #include <math.h>
 
+
 #include "socket_send_recv.h"
 #include "service_thread.h"
 #include "file_IO.h"
 
+
+
 int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket);
+extern int num_of_players_ready_to_play;
 
 DWORD ServiceThread(SOCKET* t_socket) {
 	SOCKET accept_socket = *t_socket;
@@ -107,11 +110,37 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
-	return 0;
+	//client chose to play!
+	num_of_players_ready_to_play++;
+	
+	//wait for another client to connect
+	Sleep(WAIT_FOR_RESPONSE);
+
+	//if 2 players are ready
+	if (num_of_players_ready_to_play == NUM_OF_WORKER_THREADS) {
+
+		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
+			return ERROR_CODE;
+
+		}
+
+		//can start the game, go to game loop
+	}
+	else {
+
+		if(ERROR_CODE == send_message(accept_socket, SERVER_NO_OPPONENTS, parameters_array)) {
+			num_of_players_ready_to_play--;
+			return ERROR_CODE;
+
+		}
+		num_of_players_ready_to_play--;
+		return send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket);
+	}
+	return SUCCESS_CODE;
 }
 
 int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 
 
-
+	return SUCCESS_CODE;
 }

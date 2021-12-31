@@ -30,8 +30,10 @@ Project: Ex4
 
 #pragma comment(lib,"WS2_32")
 
+int num_of_players_ready_to_play;
+
 void main(int argc, char* argv[]) {
-	
+	num_of_players_ready_to_play = 0;
 	int result;
 	unsigned long Address;
 	SOCKADDR_IN service;
