@@ -93,7 +93,7 @@ void main(int argc, char* argv[]) {
 client_cleanup:
 
 	
-
+	closesocket(m_socket);
 	result = WSACleanup();
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());

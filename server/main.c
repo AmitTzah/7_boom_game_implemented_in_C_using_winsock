@@ -119,6 +119,9 @@ void main(int argc, char* argv[]) {
 				printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
 				goto server_cleanup;
 			}
+
+			printf("server recevied message from client: %s\n", communication_message);
+
 			free(communication_message);
 
 			//send back SERVER_DENIED

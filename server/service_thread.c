@@ -53,6 +53,28 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 	}
 	printf("server sent to client %s", communication_message);
+
+
+	//recv CLIENT_DISCONNECT or CLIENT_VERSUS
+	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
+	{
+		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+	}
+	printf("server recevied message from client: %s\n", communication_message);
+
+
+	//if CLIENT_DISCONNECT
+	if (compare_messages(communication_message, "CLIENT_DISCONNECT\n") == 1) {
+
+		closesocket(t_socket);
+
+		return;
+	
+	}
+	//else, received CLIENT_VERSUS
+	// game_loop
+
+
 	free(communication_message);
 
 	
