@@ -11,7 +11,9 @@
 #include "file_IO.h"
 
 int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-
+int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
+int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
+int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket);
 
 DWORD ServiceThread(SOCKET* t_socket) {
 	SOCKET accept_socket = *t_socket;
@@ -31,7 +33,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 
 	//Connected with a second player!
-	// enter game_loop
+	//enter game_loop
 	server_game_loop(accept_socket, client_name);
 
 
@@ -50,16 +52,12 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
 	//first get the CLIENT_REQUEST
-	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
-	{
-		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+	if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+
 		return ERROR_CODE;
 
 	}
-	printf("server recevied message from client: %s\n", communication_message);
-	extract_parameters_from_communication_message(communication_message, parameters_array, message_type);
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
-
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
@@ -109,24 +107,21 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 
 	//recv CLIENT_DISCONNECT or CLIENT_VERSUS
-	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
-	{
-		printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+
+	if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+
 		return ERROR_CODE;
 
 	}
-	printf("server recevied message from client: %s\n", communication_message);
-
 
 	//if CLIENT_DISCONNECT
-	if (compare_messages(communication_message, "CLIENT_DISCONNECT\n") == 1) {
+	if (compare_messages(message_type, "CLIENT_DISCONNECT\n") == 1) {
 
 		closesocket(accept_socket);
-
 		return ERROR_CODE;
-
 	}
-	free(communication_message);
+
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	return 0;
 }

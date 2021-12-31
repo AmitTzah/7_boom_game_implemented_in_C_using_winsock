@@ -7,6 +7,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+
+
+
 //Receive bytes into a buffer of RECV_IN_CHUNKS size. After each recv, it checks if a newline character is reached.
 //This way we are guaranteed to receive the excat meseage sent, into a dynamically allcated char array.
 //*communication_message is a pointer to  char array.
@@ -15,6 +19,7 @@
 TransferResult_t recv_communication_message(SOCKET sd, char** communication_message) {
 	char receive_buffer[RECV_IN_CHUNKS];
 	*communication_message = malloc(sizeof(char));
+	char* temp_realloc = NULL;
 	if (*communication_message == NULL) {
 
 		printf("malloc failed in recv_communication_message()\n"); 
@@ -36,14 +41,17 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 		size_t old_size_of_communication_message = size_of_communication_message;
 		size_of_communication_message += bytes_recv;
 		
-		*communication_message = (char*)realloc(*communication_message, size_of_communication_message);
+		temp_realloc = (char*)realloc(*communication_message, size_of_communication_message);
 
-		if (*communication_message == NULL) {
-			printf("Memory allocation failed in recv_communication_message(), exiting...");
-			return TRNS_FAILED;
+		if (temp_realloc != NULL) {
+			*communication_message = temp_realloc;
 
 		}
+		else {
 
+			printf("Memory allocation failed in recv_communication_message(), exiting...");
+			return TRNS_FAILED;
+		}
 		char* pointer_to_start_of_current_message = *communication_message + old_size_of_communication_message;
 
 		memcpy((pointer_to_start_of_current_message), receive_buffer, bytes_recv);
@@ -54,12 +62,6 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 
 	return TRNS_SUCCEEDED;
 }
-
-
-
-
-
-
 
 
 /**
@@ -98,9 +100,6 @@ TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
 
 	return TRNS_SUCCEEDED;
 }
-
-
-
 
 
 //Construct message into communication_message which is a heap-allocated string. Formated according to messeage type and parameters array.
@@ -217,7 +216,7 @@ int compare_messages(char* array1, char* array2)
 //given a communication_message, it  extracts the parameters and message type into the appropriate  arguments IN THE FORM OF STRINGS!.
 //messeage_type should be stack-allocated in caller, using the max lengh of a message type (which is known pre compilation).
 //parameters array elements will be allocated on heap, should be freed in caller!
-void extract_parameters_from_communication_message(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
+int extract_parameters_from_communication_message(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type) {
 	int i = 0;
 	int size_of_parameter = 0;
 	int parameter_index = 0;
@@ -263,7 +262,7 @@ void extract_parameters_from_communication_message(char* communication_message, 
 			if (parameters_array[parameter_index] == NULL) {
 
 				printf("Memory allocation failed in extract_parameters_from_communication_message()\n");
-				exit(1);
+				return ERROR_CODE;
 			}
 			while (communication_message[i] != ';' && communication_message[i] != '\n') {
 				parameters_array[parameter_index][j] = communication_message[i];
@@ -279,6 +278,8 @@ void extract_parameters_from_communication_message(char* communication_message, 
 
 		parameters_array[parameter_index][j] = '\0';
 	}
+
+	return SUCCESS_CODE;
 }
 
 //this function should be called after the caller finished working with the arguments of extract_parameters_from_communication_message()
@@ -306,4 +307,44 @@ void free_communication_message_and_parameters(char* communication_message, char
 	
 
 
+}
+
+//initialize the parameters array to null.
+void init_parameter_array(char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
+
+	for (int i = 0; i < MAX_NUM_OF_MESSAGE_PARAMETERS; i++) {
+		parameters_array[i] = NULL;
+
+	}
+
+}
+
+
+
+//This is the top wrapper of the recv functions.
+//Useful for avoiding code duplication.
+// it receives the message and extracts it into the arguments message_type and parameters_array.
+//message_type is statically allocated. 
+//parameters_array and communication_message will be allocated on heap as needed, thus should be freed in caller  with free_communication_message_and_parameters;
+//if memory allocation or an api function fail, it returns ERROR_CODE.
+int recv_and_extract_communication_message(SOCKET sd, char** communication_message, char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
+	*communication_message = NULL;
+	init_parameter_array(parameters_array);
+
+	if (recv_communication_message(sd, communication_message) == TRNS_FAILED)
+	{
+		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
+		return ERROR_CODE;
+
+	}
+	printf("Recevied message: %s\n", *communication_message);
+	//TODO: write to log file instead of printing to screen.
+
+	if (ERROR_CODE == extract_parameters_from_communication_message(*communication_message, parameters_array, messeage_type)) {
+
+		return ERROR_CODE;
+	}
+
+
+	return SUCCESS_CODE;
 }

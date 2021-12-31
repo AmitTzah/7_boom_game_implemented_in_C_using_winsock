@@ -107,6 +107,8 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	int tried_to_reconnect = 0;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char* communication_message = NULL;
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+
 	SOCKADDR_IN clientService;
 
 	clientService.sin_family = AF_INET;
@@ -144,16 +146,14 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 	printf("Client sent: %s", communication_message);
 	free(communication_message);
-
+	
 	// recv SERVER_DENIED or SERVER_APPROVED
-	if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
-	{
-		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
+	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
 		return ERROR_CODE;
 
 	}
-	
-	printf("Client recevied message from server: %s", communication_message);
+
 
 	//if server denied
 	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
@@ -166,7 +166,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 		//else user reconnected
 	}
 
-	free(communication_message);
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//SERVER_APPROVED!
 	return 0;
@@ -180,19 +180,21 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	char* communication_message = NULL;
 	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
 	// recv main menu message
 	if (illegal_command != 1) {
 		
 		printf("client waiting for main menue message...\n");
-		if (recv_communication_message(m_socket, &communication_message) == TRNS_FAILED)
-		{
-			printf("Error occuerd in server receving data, error num : % ld", WSAGetLastError());
+
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
 			return ERROR_CODE;
+
 		}
+
 	}
-	printf("client recieved from server : % s", communication_message);
-	free(communication_message);
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	printf("Choose what to do next:\n");
 	printf("1. Play against another client\n");

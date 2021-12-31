@@ -15,8 +15,8 @@
 typedef enum { TRNS_FAILED, TRNS_DISCONNECTED, TRNS_SUCCEEDED } TransferResult_t;
  
 
-TransferResult_t recv_communication_message(SOCKET sd, char** communication_message);
 
+int recv_and_extract_communication_message(SOCKET sd, char** communication_message, char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]);
 
 TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
 
@@ -27,7 +27,6 @@ int format_communication_message(const char* messeage_type, char* parameters_arr
 int get_size_of_communication_message(char* communication_message);
 
 int compare_messages(char* array1, char* array2);
-void extract_parameters_from_communication_message(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type);
 void free_communication_message_and_parameters(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type);
 
 
