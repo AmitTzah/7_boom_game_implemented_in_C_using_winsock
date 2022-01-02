@@ -194,24 +194,6 @@ int get_size_of_communication_message(char* communication_message) {
 }
 
 
-//based on https://stackoverflow.com/questions/27495346/compraring-char-array-without-using-strcmp-in-c/27495579
-//similar to strcom. This function compares two char arrays, that are messeage-formated (ending in newline instead of null terminator)
-//return 1 if equal. else 0
-int compare_messages(char* array1, char* array2)
-{
-	if ((array1 == NULL) || (array2 == NULL)) {
-		printf("Passed a null array to comapre messages!\n");
-		return 0;
-	}
-		
-	while ((*array1 != '\n') && (*array2 != '\n') && (*array1 == *array2))
-	{
-		array1++;
-		array2++;
-	}
-	return (*array1 == *array2);
-}
-
 //reverse of format_communication_message()
 //given a communication_message, it  extracts the parameters and message type into the appropriate  arguments IN THE FORM OF STRINGS!.
 //messeage_type should be stack-allocated in caller, using the max lengh of a message type (which is known pre compilation).

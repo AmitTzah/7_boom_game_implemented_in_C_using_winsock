@@ -38,6 +38,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 int server_main_menu(SOCKET m_socket, int illegal_command);
+int game_loop(SOCKET m_socket);
 
 char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
@@ -85,7 +86,12 @@ void main(int argc, char* argv[]) {
 	}
 	
 	//Received game_started	
-	//enter game_loop()
+	//Start the game loop
+	if (ERROR_CODE == game_loop(m_socket)) {
+
+		goto client_cleanup;
+
+	}
 
 	
 	
@@ -149,7 +155,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 
 	//if server denied
-	if (compare_messages(communication_message, "SERVER_DENIED\n") == 1) {
+	if (strcmp(message_type, SERVER_DENIED) == 0) {
 
 		if (1 == reconnect_or_exit(m_socket, (SOCKADDR*)&clientService, sizeof(clientService), 0, 1)) {
 			//user chose to exit.
@@ -166,7 +172,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 }
 
-//Recv main_menu from client
+//Recv main_menu from server
 //returns ERROR_CODE if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
 //returns 0 after sending CLIENT_VERSUS(chossing to play).
 int server_main_menu(SOCKET m_socket, int illegal_command) {
@@ -207,25 +213,20 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 			return ERROR_CODE;
 
 		}
-
-		if (compare_messages(message_type, GAME_STARTED) == 1) {
+		//if received GAME_STARTED.
+		if (strcmp(message_type, GAME_STARTED) == 0) {
+			
 			//found another player, go to game loop.
 			return SUCCESS_CODE;
 
 		}
+		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
 
 		//Received SERVER_NO_OPPONENTS
-		else {
-			//GET main menue again
-			if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
-
-				return ERROR_CODE;
-
-			}
-
-			return server_main_menu(m_socket, 1);
-		}
-
+		
+		//GET main menu again
+		return server_main_menu(m_socket, 0);
 
 	}
 
@@ -311,6 +312,15 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	}
 
 }
+
+
+int game_loop(SOCKET m_socket) {
+	printf("Game is on!\n");
+
+	return SUCCESS_CODE;
+}
+
+
 
 //Puts the correct file name format into path_to_log_file given the client name.
 void get_path_to_log_file(char* path_to_log_file, char* client_name) {

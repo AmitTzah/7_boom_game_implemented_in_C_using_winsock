@@ -22,7 +22,5 @@ int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MA
 void free_communication_message_and_parameters(char* communication_message, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], char* messeage_type);
 
 
-int compare_messages(char* array1, char* array2);
-
 
 #endif

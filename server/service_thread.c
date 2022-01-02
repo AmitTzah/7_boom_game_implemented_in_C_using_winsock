@@ -100,7 +100,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 	}
 
 	//if CLIENT_DISCONNECT
-	if (compare_messages(message_type, "CLIENT_DISCONNECT\n") == 1) {
+	if (strcmp(message_type, CLIENT_DISCONNECT) == 0) {
 
 		closesocket(accept_socket);
 		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
@@ -112,7 +112,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 	//client chose to play!
 	num_of_players_ready_to_play++;
-	
+
 	//wait for another client to connect
 	Sleep(WAIT_FOR_RESPONSE);
 
