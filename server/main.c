@@ -30,15 +30,52 @@ Project: Ex4
 
 #pragma comment(lib,"WS2_32")
 
-int num_of_players_ready_to_play;
+HANDLE ghMutex;
+HANDLE mutex_to_sync_threads_when_waiting_for_players;
+
+shared_server_resources resources_struct;
 
 void main(int argc, char* argv[]) {
-	num_of_players_ready_to_play = 0;
+
+	resources_struct.first_arrived = 0;
+	resources_struct.num_of_players_ready_to_play = 0;
+	resources_struct.player_1_name[0] = '-';
+	resources_struct.player_1_name[1] = '-';
+
 	int result;
 	unsigned long Address;
 	SOCKADDR_IN service;
 	int bindRes;
 	int ListenRes;
+
+
+	// Create a mutex with no initial owner
+	//to protect common resources.
+		ghMutex = CreateMutex(
+			NULL,              // default security attributes
+			FALSE,             // initially not owned
+			NULL);             // unnamed mutex
+
+	if (ghMutex == NULL)
+	{
+		printf("CreateMutex error: %d\n", GetLastError());
+		goto server_cleanup;
+	}
+
+
+	// Create a mutex with no initial owner
+	//to sync threads when waiting for players.
+	mutex_to_sync_threads_when_waiting_for_players = CreateMutex(
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (mutex_to_sync_threads_when_waiting_for_players == NULL)
+	{
+		printf("CreateMutex error: %d\n", GetLastError());
+		goto server_cleanup;
+	}
+
 
 	char* communication_message=NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -52,7 +89,7 @@ void main(int argc, char* argv[]) {
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
-		exit(1);
+		goto server_cleanup;
 	}
 
 	// Create a socket.    
