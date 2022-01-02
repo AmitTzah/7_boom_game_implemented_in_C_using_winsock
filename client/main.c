@@ -38,7 +38,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 int server_main_menu(SOCKET m_socket, int illegal_command);
-int game_loop(SOCKET m_socket);
+int game_loop(SOCKET m_socket, char* user_name);
 
 char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
@@ -87,7 +87,7 @@ void main(int argc, char* argv[]) {
 	
 	//Received game_started	
 	//Start the game loop
-	if (ERROR_CODE == game_loop(m_socket)) {
+	if (ERROR_CODE == game_loop(m_socket, argv[3])) {
 
 		goto client_cleanup;
 
@@ -314,8 +314,32 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 }
 
 
-int game_loop(SOCKET m_socket) {
+int game_loop(SOCKET m_socket, char* user_name) {
 	printf("Game is on!\n");
+
+	char* communication_message = NULL;
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+
+	//receive TURN_SWITCH
+	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+		return ERROR_CODE;
+
+	}
+	//check if it's this player's turn
+	if (strcmp(parameters_array[0], user_name) == 0) {
+		printf("Your turn!\n");
+
+
+	}
+
+	else {
+		printf("%s\'s turn!\n", parameters_array[0]);
+
+	}
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
 
 	return SUCCESS_CODE;
 }

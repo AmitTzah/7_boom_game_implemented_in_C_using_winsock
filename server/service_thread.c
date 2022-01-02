@@ -13,15 +13,15 @@
 
 
 
-int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* first_to_connect);
+int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player);
-int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player);
+int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
+int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 
 int read_write_common_resources_protected(int index_of_parameter_to_access, int read_or_write, int int_data_to_write, char* name_str_to_write, int* int_read,
 	char* name_str_read, int increase_or_decrease_by_one);
 
-int check_if_player_connected_first_and_update_num_of_players(int* num_of_player);
+int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
@@ -32,14 +32,13 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	int num_of_player;
 
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
-
 		
 	if (approve_client_request(accept_socket, client_name) == ERROR_CODE) {
 
 		return ERROR_CODE;
 	}
 	
-	if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, & num_of_player) == ERROR_CODE) {
+	if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, & num_of_player, client_name) == ERROR_CODE) {
 
 		return ERROR_CODE;
 	}
@@ -47,8 +46,8 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 	//Connected with a second player!
 	//enter game_loop
-	int first_to_connect;
-	server_game_loop(accept_socket, client_name, &first_to_connect);
+	
+	server_game_loop(accept_socket, &num_of_player, client_name);
 
 
 	return 1;
@@ -83,7 +82,7 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player) {
+int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
@@ -118,7 +117,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 	// recv CLIENT_VERSUS!
 	//client chose to play!
-	if (check_if_player_connected_first_and_update_num_of_players(num_of_player) == ERROR_CODE) {
+	if (check_if_player_connected_first_and_update_num_of_players(num_of_player, client_name) == ERROR_CODE) {
 
 		return ERROR_CODE;
 	}
@@ -128,21 +127,31 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 
 	//if 2 players are ready
-	return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player);
+	return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name);
 
 }
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* first_to_connect) {
+int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+	int my_client_turn;
+	char other_client_name[MAX_LENGH_OF_CLIENT_NAME];
+	//get other client's name
+	if (*num_of_player == 1) {
+		read_write_common_resources_protected(2, 0, -1, NULL, NULL, other_client_name, -1);
 
-	//1 if this client plays next.
-	int my_client_turn = 0;
+	}
+
+	else {
+
+		read_write_common_resources_protected(1, 0, -1, NULL, NULL, other_client_name, -1);
+
+	}
 
 	//check if this thread should make the first move
-	if (*first_to_connect == 1) {
+	if (*num_of_player == 1) {
 		my_client_turn = 1;
 
 	}
@@ -170,15 +179,28 @@ int server_game_loop(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_
 			//Other client turn
 			//send the other client's name.
 
+			//Send turn switch to client with this client's name.
+			parameters_array[0] = other_client_name;
+			if (ERROR_CODE == send_message(accept_socket, TURN_SWITCH, parameters_array)) {
+				return ERROR_CODE;
+
+			}
+
 
 		}
 
 
+		//should be removed. For testing.
 
+		break;
+	//update my_client_turn
 
 	}
 
+	//should be remove. For testing.
+	while (1) {
 
+	}
 	return SUCCESS_CODE;
 }
 
@@ -199,15 +221,12 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 		ghMutex,    // handle to mutex
 		INFINITE);  // no time-out interval
 
-	switch (dwWaitResult)
-	{
-		// The thread got ownership of the mutex
-	case WAIT_OBJECT_0:
-		__try {
-			//read or write to database
+	if (dwWaitResult == WAIT_OBJECT_0) {
 
-			//if asked to read
-			if (read_or_write == 0) {
+		//read or write to database
+
+		//if asked to read
+		if (read_or_write == 0) {
 
 				if (index_of_parameter_to_access == 0) {
 					*int_read = resources_struct.first_arrived;
@@ -237,10 +256,10 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 
 			}
 
-			else {
-				//asked to write
+		else {
+			//asked to write
 
-				if (index_of_parameter_to_access == 3) {
+			if (index_of_parameter_to_access == 3) {
 
 					if (increase_or_decrease_by_one != -1) {
 						if (increase_or_decrease_by_one == 0) {
@@ -256,33 +275,45 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 					}
 				}
 
-				else if (index_of_parameter_to_access == 0) {
+			else if (index_of_parameter_to_access == 0) {
 
-					resources_struct.first_arrived = int_data_to_write;
-				}
+				resources_struct.first_arrived = int_data_to_write;
+			}
 
-				else
-				{
+			else if (index_of_parameter_to_access == 1) {
 
-				}
+				strcpy_s(resources_struct.player_1_name, MAX_LENGH_OF_CLIENT_NAME, name_str_to_write);
 
 			}
-			
-		}
 
-		__finally {
-			// Release ownership of the mutex object
-			if (!ReleaseMutex(ghMutex))
+			else if (index_of_parameter_to_access == 2) {
+
+				strcpy_s(resources_struct.player_2_name, MAX_LENGH_OF_CLIENT_NAME, name_str_to_write);
+
+			}
+
+			else
 			{
-				printf("Release mutex failed!");
-				return ERROR_CODE;
-			}
-		}
 
-		// The thread got ownership of an abandoned mutex
-		// The database is in an indeterminate state
-	case WAIT_ABANDONED:
+			}
+
+		}
+			
+	}
+
+		
+	else {
+
+		printf("WaitForSingleObject failed in read_write_common_resources_protected()\n");
+
 		return ERROR_CODE;
+	}
+
+	// Release ownership of the mutex object
+	if (!ReleaseMutex(ghMutex))
+	{
+			printf("Release mutex failed!");
+			return ERROR_CODE;
 	}
 
 	return SUCCESS_CODE;
@@ -290,7 +321,7 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 }
 
 
-int check_if_player_connected_first_and_update_num_of_players(int* num_of_player) {
+int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	
 	DWORD dwWaitResult;
 
@@ -304,13 +335,14 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 			if (resources_struct.first_arrived == 0) {
 				resources_struct.first_arrived = 1;
 				*num_of_player = 1;
-
-
+				read_write_common_resources_protected(1, 1, -1, client_name, NULL, NULL, -1);
 			}
 
 			else {
 
 				*num_of_player = 2;
+				read_write_common_resources_protected(2, 1, -1, client_name, NULL, NULL, -1);
+
 			}
 			
 			resources_struct.num_of_players_ready_to_play++;
@@ -335,7 +367,7 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 }
 
 
-int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player) {
+int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 
 	DWORD dwWaitResult;
 
@@ -384,7 +416,7 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 			printf("Release mutex failed!");
 			return ERROR_CODE;
 		}
-		return send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, num_of_player);
+		return send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, num_of_player, client_name);
 	}
 
 	}
