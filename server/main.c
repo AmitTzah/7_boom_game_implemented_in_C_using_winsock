@@ -194,13 +194,6 @@ void main(int argc, char* argv[]) {
 	} 
 
 
-
-
-
-
-	
-
-
 server_cleanup:
 	
 	result = WSACleanup();

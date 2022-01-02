@@ -33,7 +33,7 @@ void get_connection_succeeded_and_failed_and_server_denied_messages(char* connec
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int server_denied_message);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
 int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name);
-
+char* getline(void);
 
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
@@ -317,6 +317,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 int game_loop(SOCKET m_socket, char* user_name) {
 	printf("Game is on!\n");
 
+	char* user_input = NULL;
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
@@ -343,9 +344,15 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 			//get move from user.
+			printf("Enter the next number or boom:\n");
+			user_input = getline();
 			//send CLIENT_PLAYER_MOVE
 
-
+			parameters_array[0] = user_input;
+			if (ERROR_CODE == send_message(m_socket, CLIENT_PLAYER_MOVE, parameters_array)) {
+				return ERROR_CODE;
+			}
+			free(user_input);
 		}
 
 
@@ -398,3 +405,40 @@ void get_connection_succeeded_and_failed_and_server_denied_messages(char* connec
 
 }
 
+//get input from user of variable length
+//reads untill enter is pressed
+// return pointer to the read string allocated on heap
+//Memory is dynamically allocated, thus needs to be freed in caller.
+//source:
+//https://stackoverflow.com/questions/314401/how-to-read-a-line-from-the-console-in-c
+char* getline(void) {
+	char* line = malloc(100), * linep = line;
+	size_t lenmax = 100, len = lenmax;
+	int c;
+
+	if (line == NULL)
+		return NULL;
+
+	for (;;) {
+		c = fgetc(stdin);
+		if (c == EOF)
+			break;
+
+		if (--len == 0) {
+			len = lenmax;
+			char* linen = realloc(linep, lenmax *= 2);
+
+			if (linen == NULL) {
+				free(linep);
+				return NULL;
+			}
+			line = linen + (line - linep);
+			linep = linen;
+		}
+
+		if ((*line++ = c) == '\n')
+			break;
+	}
+	*line = '\0';
+	return linep;
+}
