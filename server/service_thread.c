@@ -173,6 +173,22 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 
 			}
 
+
+			//Ask client for move
+			if (ERROR_CODE == send_message(accept_socket, SERVER_MOVE_REQUEST, parameters_array)) {
+				return ERROR_CODE;
+
+			}
+
+			//Recv from client CLIENT_MOVE REQUEST
+			if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+
+				return ERROR_CODE;
+
+			}
+
+
+			my_client_turn = 0;
 		}
 
 		else {
@@ -185,14 +201,17 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 				return ERROR_CODE;
 
 			}
-
+	
+			my_client_turn = 1;
 
 		}
 
 
-		//should be removed. For testing.
 
+
+		//should be removed. For testing.
 		break;
+
 	//update my_client_turn
 
 	}

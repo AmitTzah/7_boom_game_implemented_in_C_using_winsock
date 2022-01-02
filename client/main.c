@@ -321,26 +321,42 @@ int game_loop(SOCKET m_socket, char* user_name) {
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
-	//receive TURN_SWITCH
-	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+	//while game hasn't finished
+	while (1) {
 
-		return ERROR_CODE;
+		//receive TURN_SWITCH
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+			return ERROR_CODE;
+
+		}
+		//check if it's this player's turn
+		if (strcmp(parameters_array[0], user_name) == 0) {
+			printf("Your turn!\n");
+			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
+			//receive SERVER_MOVE_REQUEST
+			if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+				return ERROR_CODE;
+			}
+			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
+			//get move from user.
+			//send CLIENT_PLAYER_MOVE
+
+
+		}
+
+
+		//Other's player move
+		else {
+			printf("%s\'s turn!\n", parameters_array[0]);
+			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
+		}
 
 	}
-	//check if it's this player's turn
-	if (strcmp(parameters_array[0], user_name) == 0) {
-		printf("Your turn!\n");
-
-
-	}
-
-	else {
-		printf("%s\'s turn!\n", parameters_array[0]);
-
-	}
-	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
-
-
 	return SUCCESS_CODE;
 }
 
