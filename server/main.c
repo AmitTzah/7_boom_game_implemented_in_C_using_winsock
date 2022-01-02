@@ -32,6 +32,7 @@ Project: Ex4
 
 HANDLE ghMutex;
 HANDLE mutex_to_sync_threads_when_waiting_for_players;
+HANDLE event_for_syncing_threads_in_game_loop;
 
 shared_server_resources resources_struct;
 
@@ -47,6 +48,25 @@ void main(int argc, char* argv[]) {
 	SOCKADDR_IN service;
 	int bindRes;
 	int ListenRes;
+
+	DWORD last_error;
+
+	/* Get handle to event by name. If the event doesn't exist, create it */
+	event_for_syncing_threads_in_game_loop = CreateEvent(
+		NULL, /* default security attributes */
+		FALSE,       /* Auto-reset event */
+		FALSE,      /* initial state is non-signaled */
+		NULL);         /* create event object without a name */
+	/* Check if succeeded and handle errors */
+	last_error = GetLastError();
+	/* If last_error is ERROR_SUCCESS, then it means that the event was created.
+	   If last_error is ERROR_ALREADY_EXISTS, then it means that the event already exists */
+
+	if (last_error != ERROR_SUCCESS) {
+		printf("Error creating event onject in server main\n");
+		goto server_cleanup;
+
+	}
 
 
 	// Create a mutex with no initial owner

@@ -26,6 +26,7 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
 extern HANDLE mutex_to_sync_threads_when_waiting_for_players;
+extern HANDLE event_for_syncing_threads_in_game_loop;
 
 DWORD ServiceThread(SOCKET* t_socket) {
 	SOCKET accept_socket = *t_socket;
@@ -90,44 +91,44 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 	//send main menu message to client
 
-	if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array)) {
-		return ERROR_CODE;
+if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array)) {
+	return ERROR_CODE;
 
-	}
+}
 
 
-	//recv CLIENT_DISCONNECT or CLIENT_VERSUS
+//recv CLIENT_DISCONNECT or CLIENT_VERSUS
 
-	if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
 
-		return ERROR_CODE;
+	return ERROR_CODE;
 
-	}
+}
 
-	//if CLIENT_DISCONNECT
-	if (strcmp(message_type, CLIENT_DISCONNECT) == 0) {
+//if CLIENT_DISCONNECT
+if (strcmp(message_type, CLIENT_DISCONNECT) == 0) {
 
-		closesocket(accept_socket);
-		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
-
-		return ERROR_CODE;
-	}
-
+	closesocket(accept_socket);
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
-	// recv CLIENT_VERSUS!
-	//client chose to play!
-	if (check_if_player_connected_first_and_update_num_of_players(num_of_player, client_name) == ERROR_CODE) {
+	return ERROR_CODE;
+}
 
-		return ERROR_CODE;
-	}
+free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
-	//wait for another client to connect
-	Sleep(WAIT_FOR_RESPONSE);
+// recv CLIENT_VERSUS!
+//client chose to play!
+if (check_if_player_connected_first_and_update_num_of_players(num_of_player, client_name) == ERROR_CODE) {
+
+	return ERROR_CODE;
+}
+
+//wait for another client to connect
+Sleep(WAIT_FOR_RESPONSE);
 
 
-	//if 2 players are ready
-	return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name);
+//if 2 players are ready
+return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name);
 
 }
 
@@ -173,7 +174,6 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 
 			}
 
-
 			//Ask client for move
 			if (ERROR_CODE == send_message(accept_socket, SERVER_MOVE_REQUEST, parameters_array)) {
 				return ERROR_CODE;
@@ -187,8 +187,14 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 
 			}
 
-
 			my_client_turn = 0;
+
+			//finished turn, signal to the other thread that is waiting.
+			if (SetEvent(event_for_syncing_threads_in_game_loop) == 0) {
+				printf("SetEvent() failed in server\n");
+
+				return ERROR_CODE;
+			}
 		}
 
 		else {
@@ -204,22 +210,13 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	
 			my_client_turn = 1;
 
+			WaitForSingleObject(event_for_syncing_threads_in_game_loop, INFINITE);
+
 		}
 
 
-
-
-		//should be removed. For testing.
-		break;
-
-	//update my_client_turn
-
 	}
 
-	//should be remove. For testing.
-	while (1) {
-
-	}
 	return SUCCESS_CODE;
 }
 
