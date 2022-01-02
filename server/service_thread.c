@@ -321,12 +321,13 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 }
 
 
+//Also writes the name of the client to player_1_name if arrived first, otherwise to player_2_name
 int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	
 	DWORD dwWaitResult;
 
 	dwWaitResult = WaitForSingleObject(
-		mutex_to_sync_threads_when_waiting_for_players,    // handle to mutex
+		ghMutex,    // handle to mutex
 		INFINITE);  // no time-out interval
 
 	if (dwWaitResult == WAIT_OBJECT_0) {
@@ -335,13 +336,14 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 			if (resources_struct.first_arrived == 0) {
 				resources_struct.first_arrived = 1;
 				*num_of_player = 1;
-				read_write_common_resources_protected(1, 1, -1, client_name, NULL, NULL, -1);
+				strcpy_s(resources_struct.player_1_name, MAX_LENGH_OF_CLIENT_NAME, client_name);
+
 			}
 
 			else {
 
 				*num_of_player = 2;
-				read_write_common_resources_protected(2, 1, -1, client_name, NULL, NULL, -1);
+				strcpy_s(resources_struct.player_2_name, MAX_LENGH_OF_CLIENT_NAME, client_name);
 
 			}
 			
@@ -357,7 +359,7 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 	}
 
 
-	if (!ReleaseMutex(mutex_to_sync_threads_when_waiting_for_players))
+	if (!ReleaseMutex(ghMutex))
 	{
 		printf("Release mutex failed!");
 		return ERROR_CODE;
@@ -366,7 +368,8 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 
 }
 
-
+//this function checks if two threads are ready to play.
+//If no, calls revursively to send_main_menu_to_client_and_try_to_connect_with_another_player()
 int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 
 	DWORD dwWaitResult;
