@@ -36,68 +36,24 @@ HANDLE event_for_syncing_threads_in_game_loop;
 
 shared_server_resources resources_struct;
 
+int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket);
+int create_thread_syncing_objects();
+
 void main(int argc, char* argv[]) {
 
+	resources_struct.game_number = 0;
 	resources_struct.first_arrived = 0;
 	resources_struct.num_of_players_ready_to_play = 0;
-	resources_struct.player_1_name[0] = '-';
-	resources_struct.player_1_name[1] = '-';
-
+	
 	int result;
 	unsigned long Address;
 	SOCKADDR_IN service;
 	int bindRes;
 	int ListenRes;
 
-	DWORD last_error;
-
-	event_for_syncing_threads_in_game_loop = CreateEvent(
-		NULL, /* default security attributes */
-		FALSE,       /* Auto-reset event */
-		FALSE,      /* initial state is non-signaled */
-		NULL);         /* create event object without a name */
-	/* Check if succeeded and handle errors */
-	last_error = GetLastError();
-	/* If last_error is ERROR_SUCCESS, then it means that the event was created.
-	   If last_error is ERROR_ALREADY_EXISTS, then it means that the event already exists */
-
-	if (last_error != ERROR_SUCCESS) {
-		printf("Error creating event onject in server main\n");
-		goto server_cleanup;
-
-	}
-
-
-	// Create a mutex with no initial owner
-	//to protect common resources.
-		ghMutex = CreateMutex(
-			NULL,              // default security attributes
-			FALSE,             // initially not owned
-			NULL);             // unnamed mutex
-
-	if (ghMutex == NULL)
-	{
-		printf("CreateMutex error: %d\n", GetLastError());
+	if (create_thread_syncing_objects() == ERROR_CODE) {
 		goto server_cleanup;
 	}
-
-
-	// Create a mutex with no initial owner
-	//to sync threads when waiting for players.
-	mutex_to_sync_threads_when_waiting_for_players = CreateMutex(
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed mutex
-
-	if (mutex_to_sync_threads_when_waiting_for_players == NULL)
-	{
-		printf("CreateMutex error: %d\n", GetLastError());
-		goto server_cleanup;
-	}
-
-
-	char* communication_message=NULL;
-	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
@@ -154,13 +110,40 @@ void main(int argc, char* argv[]) {
 
 	printf("Waiting for a client to connect...\n");
 
+	//loop to open threads and aceept connections as needed.
+	//until exit is entered.
+	if (accept_or_deny_connections(ThreadHandles, ThreadInputs, MainSocket) == 1) {
+
+		goto server_cleanup;
+
+	}
+
+server_cleanup:
+	
+	result = WSACleanup();
+	if (result != NO_ERROR) {
+		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
+	}
+
+}
+
+
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket) {
+
 	while (1)
 	{
+
+		char* communication_message = NULL;
+		char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+
+
+
 		SOCKET AcceptSocket = accept(MainSocket, NULL, NULL);
 		if (AcceptSocket == INVALID_SOCKET)
-		{	
+		{
 			printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
-			goto server_cleanup;
+			return ERROR_CODE;
 		}
 
 		printf("Client Connected.\n");
@@ -174,10 +157,10 @@ void main(int argc, char* argv[]) {
 			//first get the CLIENT_REQUEST
 			if (ERROR_CODE == recv_and_extract_communication_message(AcceptSocket, &communication_message, message_type, parameters_array)) {
 
-				goto server_cleanup;
+				return ERROR_CODE;
 
 			}
-			
+
 
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
@@ -186,13 +169,13 @@ void main(int argc, char* argv[]) {
 			//send back SERVER_DENIED
 
 			if (ERROR_CODE == send_message(AcceptSocket, SERVER_DENIED, parameters_array)) {
-				goto server_cleanup;
+				return ERROR_CODE;
 
 			}
 
 
 			closesocket(AcceptSocket);
-			
+
 		}
 		else
 		{
@@ -209,15 +192,69 @@ void main(int argc, char* argv[]) {
 				0,
 				NULL
 			);
+			if (ThreadHandles[Ind] == NULL) {
+
+				printf("Error creaating a thread in server. Code: %d\n", GetLastError());
+				return ERROR_CODE;
+
+			}
+
 		}
-	} 
-
-
-server_cleanup:
-	
-	result = WSACleanup();
-	if (result != NO_ERROR) {
-		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
+
+	return SUCCESS_CODE;
+
+}
+
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int create_thread_syncing_objects() {
+	DWORD last_error;
+
+
+	event_for_syncing_threads_in_game_loop = CreateEvent(
+		NULL, /* default security attributes */
+		FALSE,       /* Auto-reset event */
+		FALSE,      /* initial state is non-signaled */
+		NULL);         /* create event object without a name */
+	/* Check if succeeded and handle errors */
+	last_error = GetLastError();
+
+	if (last_error != ERROR_SUCCESS) {
+		printf("Error creating event onject in server main\n");
+		return ERROR_CODE;
+
+	}
+
+
+	// Create a mutex with no initial owner
+	//to protect common resources.
+	ghMutex = CreateMutex(
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (ghMutex == NULL)
+	{
+		printf("CreateMutex error: %d\n", GetLastError());
+		return ERROR_CODE;
+	}
+
+
+	// Create a mutex with no initial owner
+	//to sync threads when waiting for players.
+	mutex_to_sync_threads_when_waiting_for_players = CreateMutex(
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (mutex_to_sync_threads_when_waiting_for_players == NULL)
+	{
+		printf("CreateMutex error: %d\n", GetLastError());
+		return ERROR_CODE;
+	}
+
+
+	return SUCCESS_CODE;
+
 
 }
