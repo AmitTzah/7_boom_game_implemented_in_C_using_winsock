@@ -17,6 +17,7 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
+int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished);
 
 int read_write_common_resources_protected(int index_of_parameter_to_access, int read_or_write, int int_data_to_write, char* name_str_to_write, int* int_read,
 	char* name_str_read, int increase_or_decrease_by_one);
@@ -187,6 +188,11 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 
 			}
 
+
+			//check_if_move_has_finished_the_game(current game_number, player guess);
+			// if game hasn't ennded, update he game_number with the player's guess.
+
+			//Next turn is not mine.
 			my_client_turn = 0;
 
 			//finished turn, signal to the other thread that is waiting.
@@ -195,6 +201,12 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 
 				return ERROR_CODE;
 			}
+
+			
+			//send_game view to client according to result
+
+			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
 		}
 
 		else {
@@ -207,10 +219,11 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 				return ERROR_CODE;
 
 			}
-	
+			//next turn is mine
 			my_client_turn = 1;
 
 			WaitForSingleObject(event_for_syncing_threads_in_game_loop, INFINITE);
+			//send game_view to client
 
 		}
 
@@ -263,6 +276,12 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 				else if (index_of_parameter_to_access == 3) {
 					
 					*int_read = resources_struct.num_of_players_ready_to_play;
+				}
+
+
+				else if (index_of_parameter_to_access == 4) {
+
+					*int_read = resources_struct.game_number;
 				}
 
 
@@ -338,6 +357,7 @@ int read_write_common_resources_protected(int index_of_parameter_to_access, int 
 
 
 //Also writes the name of the client to player_1_name if arrived first, otherwise to player_2_name
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
 int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
 	
 	DWORD dwWaitResult;
@@ -417,7 +437,9 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 	else {
 
 		if (ERROR_CODE == send_message(accept_socket, SERVER_NO_OPPONENTS, parameters_array)) {
-			num_of_players_ready_to_play--;
+			//num_of_players_ready_to_play--
+			read_write_common_resources_protected(3, 1, -1, NULL, NULL, NULL, 1);
+
 			return ERROR_CODE;
 
 		}
@@ -426,7 +448,7 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 		read_write_common_resources_protected(3, 1, -1, NULL, NULL, NULL, 1);
 
 		//set first_arrived to 0
-		int first_arrived_int_data_to_write = 1;
+		int first_arrived_int_data_to_write = 0;
 		read_write_common_resources_protected(0, 1, first_arrived_int_data_to_write, NULL, NULL, NULL, -1);
 
 
@@ -457,4 +479,26 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 
 	return SUCCESS_CODE;
 
+}
+
+
+
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished) {
+
+	int game_number_read;
+	
+
+	if (read_write_common_resources_protected(4, 0,-1,NULL, &game_number_read,NULL,-1) == ERROR_CODE) {
+
+		return ERROR_CODE;
+
+	 }
+	 
+	if(game_number_read)
+
+
+
+
+	return SUCCESS_CODE;
 }

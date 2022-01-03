@@ -51,7 +51,6 @@ void main(int argc, char* argv[]) {
 
 	DWORD last_error;
 
-	/* Get handle to event by name. If the event doesn't exist, create it */
 	event_for_syncing_threads_in_game_loop = CreateEvent(
 		NULL, /* default security attributes */
 		FALSE,       /* Auto-reset event */

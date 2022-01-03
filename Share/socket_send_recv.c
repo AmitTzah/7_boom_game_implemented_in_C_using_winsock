@@ -33,7 +33,7 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 
 		if (bytes_recv == -1) {
 
-			printf("Error occuerd in receving data, error num : % ld", WSAGetLastError());
+			printf("Error occuerd in receving data, error num : % ld\n", WSAGetLastError());
 			return TRNS_FAILED;
 		}
 

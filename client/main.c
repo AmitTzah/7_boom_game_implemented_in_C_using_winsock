@@ -11,6 +11,7 @@ Project: Ex4
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <stdio.h>
+#include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <math.h>
@@ -34,6 +35,8 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
 int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name);
 char* getline(void);
+int isNumber(char s[]);
+
 
 int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
@@ -346,6 +349,16 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			//get move from user.
 			printf("Enter the next number or boom:\n");
 			user_input = getline();
+
+			//if not a number or boom
+			while (isNumber(user_input) == 0 && strcmp(user_input, "boom")!=0 ) {
+				free(user_input);
+			printf("Error: illegal command\n");
+			printf("Enter the next number or boom:\n");
+			user_input = getline();
+
+			}
+
 			//send CLIENT_PLAYER_MOVE
 
 			parameters_array[0] = user_input;
@@ -439,6 +452,19 @@ char* getline(void) {
 		if ((*line++ = c) == '\n')
 			break;
 	}
-	*line = '\0';
+	*(line-1) = '\0';
 	return linep;
+}
+
+
+//check if string is a number
+//based on https://www.codegrepper.com/code-examples/c/check+if+string+is+number+c
+int isNumber(char s[])
+{
+	for (int i = 0; s[i] != '\0'; i++)
+	{
+		if (isdigit(s[i]) == 0)
+			return 0;
+	}
+	return 1;
 }

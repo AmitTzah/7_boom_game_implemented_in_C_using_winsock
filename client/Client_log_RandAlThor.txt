@@ -1,3 +1,2 @@
-Connected to server on 127.0.0.1:8888
-.1:8888
-Connected to server on 127.0.0.1:8888
+Failed connecting to server on 127.0.0.1:8888
+n 127.0.0.1:8888 denied the connection request.
