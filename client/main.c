@@ -261,7 +261,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 //Return 1 if user chose to Exit.
 //return 0 if succeeded to reconnect.
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int is_server_denied_message) {
-	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
+	char* choice;
 
 	if (illegal_command == 0) {
 		if (is_server_denied_message == 0) {
@@ -284,11 +284,11 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	printf("Choose what to do next:\n");
 	printf("1. Try to reconnect\n");
 	printf("2. Exit\n");
-	fgets(choice, MAX_LENGH_OF_IP_PORT_MESSAGES, stdin);
-	
+	choice = getline();
+
 	if (choice[0] == '1') {
 		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
-
+			free(choice);
 			return reconnect_or_exit(m_socket, name, namelen,0,0);
 
 		}
@@ -297,20 +297,21 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 			printf("%s", connection_succeeded_message);
 			WinWriteToFile(client_log_file_name, connection_succeeded_message, strlen(connection_succeeded_message), write_from_offset_to_log_file);
 			write_from_offset_to_log_file += strlen(connection_succeeded_message);
-
+			free(choice);
 			return 0;
 
 		}
 	}
 
 	else if (choice[0] == '2') {
+		free(choice);
 
 		return 1;
 
 	}
 
 	else {
-
+		free(choice);
 		printf("Error: illegal command\n");
 		return reconnect_or_exit(m_socket, name, namelen,1,0);
 	}
