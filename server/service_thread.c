@@ -19,7 +19,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-initialize_share_resources_to_zero();
+int initialize_share_resources_to_zero();
 
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
@@ -448,7 +448,7 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 }
 
 //Should be called before starting a new game
-initialize_share_resources_to_zero() {
+int initialize_share_resources_to_zero() {
 	
 	DWORD dwWaitResult;
 

@@ -35,7 +35,6 @@ HANDLE mutex_to_sync_threads_when_waiting_for_players;
 HANDLE event_for_syncing_threads_in_game_loop;
 
 
-//This thread will check if user has entered exit in console.
 typedef struct exit_thread_parameters {
 	int has_user_entered_exit;
 	SOCKET socket_to_close;
@@ -50,8 +49,9 @@ shared_server_resources resources_struct;
 int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket);
 int create_thread_syncing_objects();
 DWORD check_for_exit_input(exit_thread_parameters* server_exiting);
+void cleanup_worker_threads_and_sockets(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS]);
 
-void main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
 	
 	resources_struct.game_has_ended = 0;
@@ -66,10 +66,6 @@ void main(int argc, char* argv[]) {
 	int bindRes;
 	int ListenRes;
 
-	if (create_thread_syncing_objects() == ERROR_CODE) {
-		goto server_cleanup;
-	}
-
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 	 
@@ -79,7 +75,8 @@ void main(int argc, char* argv[]) {
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
-		goto server_cleanup;
+		//nothing to free yet, can simply exit.
+		return ERROR_CODE;
 	}
 
 	// Create a socket.    
@@ -125,25 +122,47 @@ void main(int argc, char* argv[]) {
 
 	printf("Waiting for a client to connect...\n");
 
+	if (create_thread_syncing_objects() == ERROR_CODE) {
+		goto server_cleanup;
+	}
+
 	//loop to open threads and aceept connections as needed.
 	//until exit is entered.
-	if (accept_or_deny_connections(ThreadHandles, ThreadInputs, MainSocket) == 1) {
+
+
+	if (accept_or_deny_connections(ThreadHandles, ThreadInputs, MainSocket) == ERROR_CODE) {
 
 		goto server_cleanup;
 
 	}
 
 server_cleanup:
-	
+
+	cleanup_worker_threads_and_sockets(ThreadHandles, ThreadInputs);
+
+	if (closesocket(MainSocket) == SOCKET_ERROR) {
+		//if socket was already closed since exit was entered, don't print error.
+		if (WSAGetLastError() != WSAENOTSOCK) {
+			printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
+		}
+	}
+
+	CloseHandle(ghMutex);
+	CloseHandle(mutex_to_sync_threads_when_waiting_for_players);
+	CloseHandle(event_for_syncing_threads_in_game_loop);
+
 	result = WSACleanup();
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
 
+	return SUCCESS_CODE;
+
 }
 
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
+//wiil loop untill fails, or exit has been entered.
 int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket) {
 
 
@@ -321,4 +340,21 @@ DWORD check_for_exit_input(exit_thread_parameters* server_exiting) {
 
 	}
 	return 1;
+}
+
+void cleanup_worker_threads_and_sockets(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS])
+{
+	int Ind;
+
+	for (Ind = 0; Ind < NUM_OF_WORKER_THREADS; Ind++)
+	{
+		if (ThreadHandles[Ind] != NULL)
+		{
+			
+				closesocket(ThreadInputs[Ind]);
+				CloseHandle(ThreadHandles[Ind]);
+				ThreadHandles[Ind] = NULL;
+			
+		}
+	}
 }
