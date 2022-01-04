@@ -121,9 +121,15 @@ if (check_if_player_connected_first_and_update_num_of_players(num_of_player, cli
 	return ERROR_CODE;
 }
 
-//wait for another client to connect
-Sleep(WAIT_FOR_RESPONSE);
+//read num_of_players_ready_to_play;
+int num_of_players_ready_to_play;
+read_write_common_resources_protected(3, 0, -1, NULL, &num_of_players_ready_to_play, NULL, -1);
 
+//if no one else if watiting to play, wait.
+if (num_of_players_ready_to_play == 1) {
+	//wait for another client to connect
+	Sleep(WAIT_FOR_RESPONSE);
+}
 
 //if 2 players are ready
 return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name);
