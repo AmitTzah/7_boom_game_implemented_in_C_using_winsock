@@ -48,7 +48,7 @@ char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char server_denied_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 
-void main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
@@ -79,8 +79,8 @@ void main(int argc, char* argv[]) {
 	int OptVal = WAIT_FOR_RESPONSE;
 	int OptLen = sizeof(int);
 	if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
-		printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
-		return ERROR_CODE;
+		printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
+		goto client_cleanup;
 
 	}
 	
@@ -119,6 +119,8 @@ client_cleanup:
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
+
+	return SUCCESS_CODE;
 
 }
 
@@ -295,7 +297,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 		int OptLen = sizeof(int);
 		
 		if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
-			printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
+			printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
 			return ERROR_CODE;
 
 		}
@@ -312,7 +314,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 		OptVal = WAIT_FOR_RESPONSE;
 		OptLen = sizeof(int);
 		if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
-			printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
+			printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
 			return ERROR_CODE;
 
 		}

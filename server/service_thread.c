@@ -34,6 +34,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	int num_of_player;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
+
 		
 	if (approve_client_request(accept_socket, client_name) == ERROR_CODE) {
 
@@ -45,7 +46,8 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	while (1) {
 		if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, &num_of_player, client_name) == ERROR_CODE) {
 
-			return ERROR_CODE;
+			goto thread_cleanup;
+
 		}
 
 		//Connected with a second player!
@@ -54,24 +56,32 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 
 		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
-			return ERROR_CODE;
+			goto thread_cleanup;
 
 		}
 
 
 		//enter game_loop
-		server_game_loop(accept_socket, &num_of_player, client_name);
+		if (ERROR_CODE == server_game_loop(accept_socket, &num_of_player, client_name)) {
+
+			goto thread_cleanup;
+
+		}
 
 		//game ended for both clients!
 
 		if (ERROR_CODE == initialize_share_resources_to_zero()) {
 
-			return ERROR_CODE;
+			goto thread_cleanup;
 
 		}
 	}
 
-	return 1;
+thread_cleanup:
+
+	printf("Player disconnected. Exiting.\n");
+	//write to log file
+
 }
 
 //get client request, extract username into the argument client_name, send back SERVER_APPROVED.
@@ -116,6 +126,8 @@ if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array
 
 }
 
+//wait for user response infinite time.
+set_time_out_to_recv_calls(accept_socket, INFINITE);
 
 //recv CLIENT_DISCONNECT or CLIENT_VERSUS
 
@@ -124,6 +136,9 @@ if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communi
 	return ERROR_CODE;
 
 }
+
+//reconfigure back to 15000 ms
+set_time_out_to_recv_calls(accept_socket, WAIT_FOR_RESPONSE);
 
 //if CLIENT_DISCONNECT
 if (strcmp(message_type, CLIENT_DISCONNECT) == 0) {
@@ -483,5 +498,25 @@ int initialize_share_resources_to_zero() {
 
 }
 
+
+//used to change timeout to inifinte when waiting for user input. And then configure back to 15000ms
+// timeout is in miliseconds
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int set_time_out_to_recv_calls(SOCKET accept_socket, int timeout) {
+
+
+	//configure socket to timeout recv calls after WAIT_FOR_RESPONSE ms
+	int OptVal = timeout;
+	int OptLen = sizeof(int);
+	if (setsockopt(accept_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
+		printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
+		return ERROR_CODE;
+
+	}
+
+	return SUCCESS_CODE;
+
+
+}
 
 

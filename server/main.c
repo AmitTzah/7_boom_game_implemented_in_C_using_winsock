@@ -203,6 +203,15 @@ int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCK
 			return ERROR_CODE;
 
 		}
+
+	
+		//configure socket to timeout recv calls after WAIT_FOR_RESPONSE ms
+		if (set_time_out_to_recv_calls(AcceptSocket,WAIT_FOR_RESPONSE) == SOCKET_ERROR) {
+			printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
+			return ERROR_CODE;
+
+		}
+
 		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
 		char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 

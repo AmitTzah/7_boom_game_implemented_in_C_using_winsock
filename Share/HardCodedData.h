@@ -17,7 +17,9 @@
 
 #define BOOM_NUMBER 7
 
+//time out in ms for receive calls
 #define WAIT_FOR_RESPONSE 15000
+
 #define SERVER_ADDRESS_STR "127.0.0.1"
 #define NUM_OF_WORKER_THREADS 2
 #define MAX_LENGH_OF_IP_PORT_MESSAGES 200 //known in compile time!

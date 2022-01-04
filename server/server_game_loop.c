@@ -100,12 +100,22 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 
 			}
 
+
+			// wait for user response infinite time.
+			set_time_out_to_recv_calls(accept_socket, INFINITE);
+
+
 			//Recv from client CLIENT_PLAYER_MOVE
 			if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
 
 				return ERROR_CODE;
 
 			}
+
+
+			//reconfigure back to 15000 ms
+			set_time_out_to_recv_calls(accept_socket, WAIT_FOR_RESPONSE);
+
 
 			//get next number
 			int current_game_number;

@@ -49,7 +49,7 @@ TransferResult_t recv_communication_message(SOCKET sd, char** communication_mess
 		}
 		else {
 
-			printf("Memory allocation failed in recv_communication_message(), exiting...");
+			printf("Memory allocation failed in recv_communication_message(), exiting...\n");
 			return TRNS_FAILED;
 		}
 		char* pointer_to_start_of_current_message = *communication_message + old_size_of_communication_message;
@@ -343,7 +343,7 @@ int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MA
 	}
 
 	if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), sd) == TRNS_FAILED) {
-		printf("Failed to send messeage from client!\n");
+		printf("Failed to send messeage!\n");
 		return ERROR_CODE;
 	}
 
