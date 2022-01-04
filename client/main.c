@@ -181,7 +181,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 //returns 0 after sending CLIENT_VERSUS(chossing to play).
 int server_main_menu(SOCKET m_socket, int illegal_command) {
 	char* communication_message = NULL;
-	char choice[MAX_LENGH_OF_IP_PORT_MESSAGES];
+	char* choice;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
@@ -202,10 +202,11 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	printf("Choose what to do next:\n");
 	printf("1. Play against another client\n");
 	printf("2. Quit\n");
-	fgets(choice, MAX_LENGH_OF_IP_PORT_MESSAGES, stdin);
+	choice = getline();
 
-	if (choice[0] == '1') {
+	if (strcmp(choice, "1")==0) {
 		//send CLIENT_VERSUS
+		free(choice);
 		if (ERROR_CODE == send_message(m_socket, CLIENT_VERSUS, parameters_array)) {
 			return ERROR_CODE;
 
@@ -234,7 +235,8 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 
 	}
 
-	else if (choice[0] == '2') {
+	else if (strcmp(choice, "2")==0) {
+		free(choice);
 
 		//send CLIENT_DISCONNECT
 
@@ -247,6 +249,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	}
 
 	else {
+		free(choice);
 
 		printf("Error: illegal command\n");
 		return server_main_menu(m_socket, 1);
@@ -286,7 +289,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 	printf("2. Exit\n");
 	choice = getline();
 
-	if (choice[0] == '1') {
+	if (strcmp(choice, "1") == 0) {
 		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
 			free(choice);
 			return reconnect_or_exit(m_socket, name, namelen,0,0);
@@ -303,7 +306,7 @@ int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen,
 		}
 	}
 
-	else if (choice[0] == '2') {
+	else if (strcmp(choice, "2") == 0) {
 		free(choice);
 
 		return 1;
