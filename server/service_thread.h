@@ -20,6 +20,8 @@ typedef struct shared_server_resources {
 	char player_2_name[MAX_LENGH_OF_CLIENT_NAME];
 	int num_of_players_ready_to_play;
 	int game_number;
+	int game_has_ended;
+	char* current_player_move;
 
 } shared_server_resources;
 

@@ -41,10 +41,12 @@ int create_thread_syncing_objects();
 
 void main(int argc, char* argv[]) {
 
+	resources_struct.game_has_ended = 0;
 	resources_struct.game_number = 0;
 	resources_struct.first_arrived = 0;
 	resources_struct.num_of_players_ready_to_play = 0;
-	
+	resources_struct.current_player_move = NULL;
+
 	int result;
 	unsigned long Address;
 	SOCKADDR_IN service;

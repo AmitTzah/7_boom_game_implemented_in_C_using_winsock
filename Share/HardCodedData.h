@@ -15,6 +15,7 @@
 
 //project specific constants
 
+#define BOOM_NUMBER 7
 
 #define WAIT_FOR_RESPONSE 15000
 #define SERVER_ADDRESS_STR "127.0.0.1"

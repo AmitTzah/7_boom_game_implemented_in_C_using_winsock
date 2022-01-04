@@ -42,6 +42,7 @@ int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 int server_main_menu(SOCKET m_socket, int illegal_command);
 int game_loop(SOCKET m_socket, char* user_name);
+int recv_game_view_or_game_end(SOCKET m_socket);
 
 char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
@@ -366,6 +367,13 @@ int game_loop(SOCKET m_socket, char* user_name) {
 				return ERROR_CODE;
 			}
 			free(user_input);
+
+			//recv game view and check for game end
+			if (ERROR_CODE == recv_game_view_or_game_end(m_socket)) {
+
+				return ERROR_CODE;
+
+			 }
 		}
 
 
@@ -374,12 +382,64 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			printf("%s\'s turn!\n", parameters_array[0]);
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
+			//recv game view and check for game end
+			if (ERROR_CODE == recv_game_view_or_game_end(m_socket)) {
+
+				return ERROR_CODE;
+
+			}
+
 		}
 
 	}
 	return SUCCESS_CODE;
 }
 
+
+int recv_game_view_or_game_end(SOCKET m_socket ) {
+
+	char* communication_message = NULL;
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+
+	//recv game_view
+
+	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+		return ERROR_CODE;
+	}
+
+
+	printf("%s move was %s\n", parameters_array[0], parameters_array[1]);
+
+
+	//If recieved "CONT"
+
+	if (strcmp(parameters_array[2], "CONT")==0) {
+		printf("CONT\n");
+	}
+
+	//Recieved "End"
+	else {
+		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
+		//recv game_ended
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+
+			return ERROR_CODE;
+		}
+		printf("%s won!\n", parameters_array[0]);
+		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+
+		//needs to go back to main_menu somehow.
+		return SUCCESS_CODE;
+
+	}
+
+	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
+	return SUCCESS_CODE;
+
+}
 
 
 //Puts the correct file name format into path_to_log_file given the client name.
