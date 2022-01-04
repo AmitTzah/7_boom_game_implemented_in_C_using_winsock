@@ -74,6 +74,15 @@ void main(int argc, char* argv[]) {
 
 	}
 
+
+	//configure socket to timeout recv calls after WAIT_FOR_RESPONSE ms
+	int OptVal = WAIT_FOR_RESPONSE;
+	int OptLen = sizeof(int);
+	if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
+		printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
+		return ERROR_CODE;
+
+	}
 	
 	//Attempt to connect with server
 	if (ERROR_CODE == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
@@ -280,12 +289,35 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 
 		}
 
+		
+		//only for CLIENT_VERSUS, wait for 30 seconds before time_out
+		int OptVal = 30000;
+		int OptLen = sizeof(int);
+		
+		if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
+			printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
+			return ERROR_CODE;
+
+		}
+		
+
 		//receive GAME_STARTED or server_no_opponents
 		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
 
 			return ERROR_CODE;
 
 		}
+
+		//configure socket back to timeout recv calls after WAIT_FOR_RESPONSE ms
+		OptVal = WAIT_FOR_RESPONSE;
+		OptLen = sizeof(int);
+		if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
+			printf("setsockopt for SO_KEEPALIVE failed with error: %u\n", WSAGetLastError());
+			return ERROR_CODE;
+
+		}
+
+
 		//if received GAME_STARTED.
 		if (strcmp(message_type, GAME_STARTED) == 0) {
 			
