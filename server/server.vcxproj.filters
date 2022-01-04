@@ -36,6 +36,9 @@
     <ClCompile Include="..\Share\socket_send_recv.c">
       <Filter>Shared Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="server_game_loop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Share\create_and_handle_processes.h">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="..\Share\socket_send_recv.h">
       <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="server_game_loop.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

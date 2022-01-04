@@ -28,6 +28,8 @@ typedef struct shared_server_resources {
 
 DWORD ServiceThread(SOCKET* t_socket);
 
+int read_write_common_resources_protected(int index_of_parameter_to_access, int read_or_write, int int_data_to_write, char* name_str_to_write, int* int_read,
+	char** name_str_read, int increase_or_decrease_by_one);
 
 
 #endif
