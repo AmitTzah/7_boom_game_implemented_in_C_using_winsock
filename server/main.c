@@ -34,6 +34,14 @@ HANDLE ghMutex;
 HANDLE mutex_to_sync_threads_when_waiting_for_players;
 HANDLE event_for_syncing_threads_in_game_loop;
 
+
+//This thread will check if user has entered exit in console.
+typedef struct exit_thread_parameters {
+	int has_user_entered_exit;
+	SOCKET socket_to_close;
+} exit_thread_parameters;
+
+
 //this barrier will be used so have all threads enter the the game loop at the same time.
 SYNCHRONIZATION_BARRIER barrier;
 
@@ -41,9 +49,11 @@ shared_server_resources resources_struct;
 
 int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket);
 int create_thread_syncing_objects();
+DWORD check_for_exit_input(exit_thread_parameters* server_exiting);
 
 void main(int argc, char* argv[]) {
 
+	
 	resources_struct.game_has_ended = 0;
 	resources_struct.game_number = 0;
 	resources_struct.first_arrived = 0;
@@ -62,7 +72,7 @@ void main(int argc, char* argv[]) {
 
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
-
+	 
 	// Initialize Winsock.
 	WSADATA wsaData;
 	int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -136,23 +146,44 @@ server_cleanup:
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
 int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket) {
 
+
+
+	//create a thread to signal when user has entered 'exit'
+	exit_thread_parameters server_exiting;
+
+	server_exiting.has_user_entered_exit = 0;
+	server_exiting.socket_to_close = MainSocket;
+
+	HANDLE exit_thread= CreateThread(
+		NULL,
+		0,
+		(LPTHREAD_START_ROUTINE)check_for_exit_input,
+		&server_exiting,
+		0,
+		NULL
+	);
+	if (exit_thread == NULL) {
+
+		printf("Error creaating a thread in server. Code: %d\n", GetLastError());
+		return ERROR_CODE;
+
+	}
+
+	//while exit hasnt been entered
 	while (1)
 	{
 
 		char* communication_message = NULL;
 		char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 
-
-
 		SOCKET AcceptSocket = accept(MainSocket, NULL, NULL);
 		if (AcceptSocket == INVALID_SOCKET)
-		{
+			//check if it's not an Interrupted function call from user entering exit.
+		{	if(WSAGetLastError()!= WSAEINTR)
 			printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
 			return ERROR_CODE;
+
 		}
-
-		printf("Client Connected.\n");
-
 		int Ind = find_index_of_unused_thread(ThreadHandles, NUM_OF_WORKER_THREADS);
 		char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
@@ -185,24 +216,24 @@ int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCK
 		else
 		{
 
-			ThreadInputs[Ind] = AcceptSocket; // shallow copy: don't close 
-											  // AcceptSocket, instead close 
-											  // ThreadInputs[Ind] when the
-											  // time comes.
-			ThreadHandles[Ind] = CreateThread(
-				NULL,
-				0,
-				(LPTHREAD_START_ROUTINE)ServiceThread,
-				&(ThreadInputs[Ind]),
-				0,
-				NULL
-			);
-			if (ThreadHandles[Ind] == NULL) {
+		ThreadInputs[Ind] = AcceptSocket; // shallow copy: don't close 
+										  // AcceptSocket, instead close 
+										  // ThreadInputs[Ind] when the
+										  // time comes.
+		ThreadHandles[Ind] = CreateThread(
+			NULL,
+			0,
+			(LPTHREAD_START_ROUTINE)ServiceThread,
+			&(ThreadInputs[Ind]),
+			0,
+			NULL
+		);
+		if (ThreadHandles[Ind] == NULL) {
 
-				printf("Error creaating a thread in server. Code: %d\n", GetLastError());
-				return ERROR_CODE;
+			printf("Error creaating a thread in server. Code: %d\n", GetLastError());
+			return ERROR_CODE;
 
-			}
+		}
 
 		}
 	}
@@ -270,4 +301,24 @@ int create_thread_syncing_objects() {
 	return SUCCESS_CODE;
 
 
+}
+
+//when user enters exit, this function will signal to caller.
+DWORD check_for_exit_input(exit_thread_parameters* server_exiting) {
+	char* user_input;
+	while (1) {
+		user_input = getline();
+		if (strcmp(user_input, "exit")==0) {
+			server_exiting->has_user_entered_exit = 1;
+			closesocket(server_exiting->socket_to_close);
+			free(user_input);
+			break;
+
+		}
+		
+
+		free(user_input);
+
+	}
+	return 1;
 }

@@ -18,6 +18,6 @@ void parse_row_to_array_of_ints(char* pathToFile, int index_of_wanted_line, int*
 int write_to_output(char* pathToFile, int virtual_page_num, int physycal_page_num, int time, BOOL need_to_empty, int write_from_offset);
 
 char* find_output_path(char* path_to_input_file);
-
+char* getline(void);
 #endif
 

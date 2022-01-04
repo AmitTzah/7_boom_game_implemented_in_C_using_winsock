@@ -400,4 +400,44 @@ char* find_output_path(char* path_to_input_file)
 
 
 
+//get input from user of variable length
+//reads untill enter is pressed
+// return pointer to the read string allocated on heap
+//Memory is dynamically allocated, thus needs to be freed in caller.
+//source:
+//https://stackoverflow.com/questions/314401/how-to-read-a-line-from-the-console-in-c
+char* getline(void) {
+	char* line = malloc(100), * linep = line;
+	size_t lenmax = 100, len = lenmax;
+	int c;
+
+	if (line == NULL)
+		return NULL;
+
+	for (;;) {
+		c = fgetc(stdin);
+		if (c == EOF)
+			break;
+
+		if (--len == 0) {
+			len = lenmax;
+			char* linen = realloc(linep, lenmax *= 2);
+
+			if (linen == NULL) {
+				free(linep);
+				return NULL;
+			}
+			line = linen + (line - linep);
+			linep = linen;
+		}
+
+		if ((*line++ = c) == '\n')
+			break;
+	}
+	*(line - 1) = '\0';
+	return linep;
+}
+
+
+
 

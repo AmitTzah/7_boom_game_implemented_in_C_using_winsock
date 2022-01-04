@@ -34,7 +34,7 @@ void get_connection_succeeded_and_failed_and_server_denied_messages(char* connec
 int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int server_denied_message);
 void get_path_to_log_file(char* path_to_log_file, char* client_name);
 int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, char* user_name);
-char* getline(void);
+
 int isNumber(char s[]);
 
 
@@ -513,42 +513,4 @@ void get_connection_succeeded_and_failed_and_server_denied_messages(char* connec
 	strcat_s(server_denied_message, MAX_LENGH_OF_IP_PORT_MESSAGES, " denied the connection request.\n");
 
 
-}
-
-//get input from user of variable length
-//reads untill enter is pressed
-// return pointer to the read string allocated on heap
-//Memory is dynamically allocated, thus needs to be freed in caller.
-//source:
-//https://stackoverflow.com/questions/314401/how-to-read-a-line-from-the-console-in-c
-char* getline(void) {
-	char* line = malloc(100), * linep = line;
-	size_t lenmax = 100, len = lenmax;
-	int c;
-
-	if (line == NULL)
-		return NULL;
-
-	for (;;) {
-		c = fgetc(stdin);
-		if (c == EOF)
-			break;
-
-		if (--len == 0) {
-			len = lenmax;
-			char* linen = realloc(linep, lenmax *= 2);
-
-			if (linen == NULL) {
-				free(linep);
-				return NULL;
-			}
-			line = linen + (line - linep);
-			linep = linen;
-		}
-
-		if ((*line++ = c) == '\n')
-			break;
-	}
-	*(line - 1) = '\0';
-	return linep;
 }
