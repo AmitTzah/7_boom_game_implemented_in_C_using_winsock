@@ -15,6 +15,7 @@
 
 bool containsDigit(int number, int digit);
 int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished);
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME]);
 
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
@@ -22,137 +23,14 @@ extern HANDLE mutex_to_sync_threads_when_waiting_for_players;
 extern HANDLE event_for_syncing_threads_in_game_loop;
 
 
-//checks if move has finished the game and writes to shared_server_resources accordingly to let the other thread know.
-//if some api api function fails, return ERROR_CODE, otherwise 0. 
-int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished) {
-
-	int game_number_read;
-	int next_number;
-	int should_guess_boom = 0;
-
-
-	if (ERROR_CODE == read_write_common_resources_protected(5, 0, -1, NULL, game_has_finished, NULL, -1)) {
-
-		return ERROR_CODE;
-
-	}
-
-	if (read_write_common_resources_protected(4, 0, -1, NULL, &game_number_read, NULL, -1) == ERROR_CODE) {
-
-		return ERROR_CODE;
-
-	}
-	next_number = game_number_read + 1;
-
-	//check if next_number has digit BOOM_NUMBER
-	if (containsDigit(next_number, BOOM_NUMBER) == true) {
-		should_guess_boom = 1;
-
-
-	}
-
-	//check if next_number is divisble by BOOM_NUMBER
-	if ((next_number % BOOM_NUMBER) == 0) {
-
-		should_guess_boom = 1;
-
-	}
-
-	//if entered "boom"
-	if (strcmp(player_guess, "boom") == 0) {
-
-		if (should_guess_boom == 0) {
-			*game_has_finished = 1;
-
-			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
-
-				return ERROR_CODE;
-
-			}
-
-			return SUCCESS_CODE;
-
-		}
-
-
-		else {
-			*game_has_finished = 0;
-			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
-
-				return ERROR_CODE;
-
-			}
-			return SUCCESS_CODE;
-
-		}
-
-
-	}
-
-	//entered number
-	else {
-
-		if (should_guess_boom == 1) {
-			*game_has_finished = 1;
-			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
-
-				return ERROR_CODE;
-
-			}
-			return SUCCESS_CODE;
-
-		}
-
-		if (strtol(player_guess, NULL, 10) != next_number) {
-			//wrong number
-			*game_has_finished = 1;
-			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
-
-				return ERROR_CODE;
-
-			}
-			return SUCCESS_CODE;
-
-		}
-
-		*game_has_finished = 0;
-		if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
-
-			return ERROR_CODE;
-
-		}
-		return SUCCESS_CODE;
-
-	}
-
-
-
-
-}
-
-//based on https://stackoverflow.com/questions/46803064/determine-if-a-number-contains-a-digit-for-class-assignment/46803249
-bool containsDigit(int number, int digit)
-{
-	while (number != 0)
-	{
-		int curr_digit = number % 10;
-		if (curr_digit == digit) return true;
-		number /= 10;
-	}
-
-	return false;
-}
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
 int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
-	char* communication_message = NULL;
-	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
-	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+	
 	int my_client_turn;
 	char other_client_name[MAX_LENGH_OF_CLIENT_NAME];
 	char* p_other_client_name = other_client_name;
-	int game_has_finished = 0;
-
+	
 	//get other client's name
 	if (*num_of_player == 1) {
 		read_write_common_resources_protected(2, 0, -1, NULL, NULL, &p_other_client_name, -1);
@@ -176,7 +54,26 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 		my_client_turn = 0;
 	}
 
-	//while game is still on
+	//Loop untill game ends.
+	if (while_game_is_Stil_on(accept_socket, client_name, my_client_turn, other_client_name) == ERROR_CODE) {
+
+		return ERROR_CODE;
+
+	}
+
+	return SUCCESS_CODE;
+}
+
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME],int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+
+
+	char* communication_message = NULL;
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
+	int game_has_finished = 0;
+
+	//Loop untill game ends.
 	while (1) {
 
 		if (my_client_turn == 1) {
@@ -301,5 +198,128 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	}
 
 	return SUCCESS_CODE;
+
 }
 
+
+
+//checks if move has finished the game and writes to shared_server_resources accordingly to let the other thread know.
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished) {
+
+	int game_number_read;
+	int next_number;
+	int should_guess_boom = 0;
+
+
+	if (ERROR_CODE == read_write_common_resources_protected(5, 0, -1, NULL, game_has_finished, NULL, -1)) {
+
+		return ERROR_CODE;
+
+	}
+
+	if (read_write_common_resources_protected(4, 0, -1, NULL, &game_number_read, NULL, -1) == ERROR_CODE) {
+
+		return ERROR_CODE;
+
+	}
+	next_number = game_number_read + 1;
+
+	//check if next_number has digit BOOM_NUMBER
+	if (containsDigit(next_number, BOOM_NUMBER) == true) {
+		should_guess_boom = 1;
+
+
+	}
+
+	//check if next_number is divisble by BOOM_NUMBER
+	if ((next_number % BOOM_NUMBER) == 0) {
+
+		should_guess_boom = 1;
+
+	}
+
+	//if entered "boom"
+	if (strcmp(player_guess, "boom") == 0) {
+
+		if (should_guess_boom == 0) {
+			*game_has_finished = 1;
+
+			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
+
+				return ERROR_CODE;
+
+			}
+
+			return SUCCESS_CODE;
+
+		}
+
+
+		else {
+			*game_has_finished = 0;
+			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
+
+				return ERROR_CODE;
+
+			}
+			return SUCCESS_CODE;
+
+		}
+
+
+	}
+
+	//entered number
+	else {
+
+		if (should_guess_boom == 1) {
+			*game_has_finished = 1;
+			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
+
+				return ERROR_CODE;
+
+			}
+			return SUCCESS_CODE;
+
+		}
+
+		if (strtol(player_guess, NULL, 10) != next_number) {
+			//wrong number
+			*game_has_finished = 1;
+			if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
+
+				return ERROR_CODE;
+
+			}
+			return SUCCESS_CODE;
+
+		}
+
+		*game_has_finished = 0;
+		if (read_write_common_resources_protected(5, 1, *game_has_finished, NULL, NULL, NULL, -1) == ERROR_CODE) {
+
+			return ERROR_CODE;
+
+		}
+		return SUCCESS_CODE;
+
+	}
+
+
+
+
+}
+
+//based on https://stackoverflow.com/questions/46803064/determine-if-a-number-contains-a-digit-for-class-assignment/46803249
+bool containsDigit(int number, int digit)
+{
+	while (number != 0)
+	{
+		int curr_digit = number % 10;
+		if (curr_digit == digit) return true;
+		number /= 10;
+	}
+
+	return false;
+}

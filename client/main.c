@@ -176,6 +176,72 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 
 }
 
+
+
+// trying to reconnect recursively.
+// if illegal_command=1, then the function was called user entered a wrong input, and connection failed messeage won't be print to screen and file.
+// if server_denied_message=1 the message for server denied will by printed.
+//Return 1 if user chose to Exit.
+//return 0 if succeeded to reconnect.
+int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int is_server_denied_message) {
+	char* choice;
+
+	if (illegal_command == 0) {
+		if (is_server_denied_message == 0) {
+			//print and write to file the connction failed message
+
+			printf("%s", connection_failed_message);
+			WinWriteToFile(client_log_file_name, connection_failed_message, strlen(connection_failed_message), write_from_offset_to_log_file);
+			write_from_offset_to_log_file += strlen(connection_failed_message);
+		}
+
+		else {
+
+			//print and write to file the server denied message
+			printf("%s", server_denied_message);
+			WinWriteToFile(client_log_file_name, server_denied_message, strlen(server_denied_message), write_from_offset_to_log_file);
+			write_from_offset_to_log_file += strlen(server_denied_message);
+
+		}
+	}
+	printf("Choose what to do next:\n");
+	printf("1. Try to reconnect\n");
+	printf("2. Exit\n");
+	choice = getline();
+
+	if (strcmp(choice, "1") == 0) {
+		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
+			free(choice);
+			return reconnect_or_exit(m_socket, name, namelen, 0, 0);
+
+		}
+
+		else {
+			printf("%s", connection_succeeded_message);
+			WinWriteToFile(client_log_file_name, connection_succeeded_message, strlen(connection_succeeded_message), write_from_offset_to_log_file);
+			write_from_offset_to_log_file += strlen(connection_succeeded_message);
+			free(choice);
+			return 0;
+
+		}
+	}
+
+	else if (strcmp(choice, "2") == 0) {
+		free(choice);
+
+		return 1;
+
+	}
+
+	else {
+		free(choice);
+		printf("Error: illegal command\n");
+		return reconnect_or_exit(m_socket, name, namelen, 1, 0);
+	}
+
+}
+
+
 //Recv main_menu from server
 //returns ERROR_CODE if fails acutely or user chooses to quit, in that case goto client_cleanup in caller.
 //returns 0 after sending CLIENT_VERSUS(chossing to play).
@@ -257,71 +323,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 }
 
 
-
-// trying to reconnect recursively.
-// if illegal_command=1, then the function was called user entered a wrong input, and connection failed messeage won't be print to screen and file.
-// if server_denied_message=1 the message for server denied will by printed.
-//Return 1 if user chose to Exit.
-//return 0 if succeeded to reconnect.
-int reconnect_or_exit(SOCKET m_socket, const struct sockaddr* name, int namelen, int illegal_command, int is_server_denied_message) {
-	char* choice;
-
-	if (illegal_command == 0) {
-		if (is_server_denied_message == 0) {
-			//print and write to file the connction failed message
-
-			printf("%s", connection_failed_message);
-			WinWriteToFile(client_log_file_name, connection_failed_message, strlen(connection_failed_message), write_from_offset_to_log_file);
-			write_from_offset_to_log_file += strlen(connection_failed_message);
-		}
-
-		else {
-
-			//print and write to file the server denied message
-			printf("%s", server_denied_message);
-			WinWriteToFile(client_log_file_name, server_denied_message, strlen(server_denied_message), write_from_offset_to_log_file);
-			write_from_offset_to_log_file += strlen(server_denied_message);
-
-		}
-	}
-	printf("Choose what to do next:\n");
-	printf("1. Try to reconnect\n");
-	printf("2. Exit\n");
-	choice = getline();
-
-	if (strcmp(choice, "1") == 0) {
-		if (connect(m_socket, name, namelen) == SOCKET_ERROR) {
-			free(choice);
-			return reconnect_or_exit(m_socket, name, namelen,0,0);
-
-		}
-
-		else {
-			printf("%s", connection_succeeded_message);
-			WinWriteToFile(client_log_file_name, connection_succeeded_message, strlen(connection_succeeded_message), write_from_offset_to_log_file);
-			write_from_offset_to_log_file += strlen(connection_succeeded_message);
-			free(choice);
-			return 0;
-
-		}
-	}
-
-	else if (strcmp(choice, "2") == 0) {
-		free(choice);
-
-		return 1;
-
-	}
-
-	else {
-		free(choice);
-		printf("Error: illegal command\n");
-		return reconnect_or_exit(m_socket, name, namelen,1,0);
-	}
-
-}
-
-
+//Client loops untill game finishes
 int game_loop(SOCKET m_socket, char* user_name) {
 	printf("Game is on!\n");
 
@@ -356,11 +358,11 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			user_input = getline();
 
 			//if not a number or boom
-			while (isNumber(user_input) == 0 && strcmp(user_input, "boom")!=0 ) {
+			while (isNumber(user_input) == 0 && strcmp(user_input, "boom") != 0) {
 				free(user_input);
-			printf("Error: illegal command\n");
-			printf("Enter the next number or boom:\n");
-			user_input = getline();
+				printf("Error: illegal command\n");
+				printf("Enter the next number or boom:\n");
+				user_input = getline();
 
 			}
 
@@ -377,7 +379,7 @@ int game_loop(SOCKET m_socket, char* user_name) {
 
 				return ERROR_CODE;
 
-			 }
+			}
 		}
 
 
@@ -400,7 +402,7 @@ int game_loop(SOCKET m_socket, char* user_name) {
 }
 
 
-int recv_game_view_or_game_end(SOCKET m_socket ) {
+int recv_game_view_or_game_end(SOCKET m_socket) {
 
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -419,7 +421,7 @@ int recv_game_view_or_game_end(SOCKET m_socket ) {
 
 	//If recieved "CONT"
 
-	if (strcmp(parameters_array[2], "CONT")==0) {
+	if (strcmp(parameters_array[2], "CONT") == 0) {
 		printf("CONT\n");
 	}
 
@@ -446,20 +448,34 @@ int recv_game_view_or_game_end(SOCKET m_socket ) {
 }
 
 
+//check if string is a number
+//based on https://www.codegrepper.com/code-examples/c/check+if+string+is+number+c
+int isNumber(char s[])
+{
+	for (int i = 0; s[i] != '\0'; i++)
+	{
+		if (isdigit(s[i]) == 0)
+			return 0;
+	}
+	return 1;
+}
+
+
+
 //Puts the correct file name format into path_to_log_file given the client name.
 void get_path_to_log_file(char* path_to_log_file, char* client_name) {
 
 	strcpy_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, "Client_log_");
 	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, client_name);
-	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE,".txt");
+	strcat_s(path_to_log_file, MAX_LENGTH_OF_PATH_TO_A_FILE, ".txt");
 
 
 }
 
 //Puts the correct connection_succeeded_and_failed_messages into the given array, by using the ip an port in string formats.
-void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message,char* ip, char* port) {
+void get_connection_succeeded_and_failed_and_server_denied_messages(char* connection_succeeded_message, char* connection_failed_message, char* server_denied_message, char* ip, char* port) {
 
-	
+
 	strcpy_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, "Connected to server on ");
 	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ip);
 	strcat_s(connection_succeeded_message, MAX_LENGH_OF_IP_PORT_MESSAGES, ":");
@@ -516,19 +532,6 @@ char* getline(void) {
 		if ((*line++ = c) == '\n')
 			break;
 	}
-	*(line-1) = '\0';
+	*(line - 1) = '\0';
 	return linep;
-}
-
-
-//check if string is a number
-//based on https://www.codegrepper.com/code-examples/c/check+if+string+is+number+c
-int isNumber(char s[])
-{
-	for (int i = 0; s[i] != '\0'; i++)
-	{
-		if (isdigit(s[i]) == 0)
-			return 0;
-	}
-	return 1;
 }
