@@ -19,7 +19,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
 int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-
+initialize_share_resources_to_zero();
 
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
@@ -40,27 +40,36 @@ DWORD ServiceThread(SOCKET* t_socket) {
 		return ERROR_CODE;
 	}
 	
-	if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, & num_of_player, client_name) == ERROR_CODE) {
-
-		return ERROR_CODE;
-	}
-
-	//Connected with a second player!
-	//wait untill both threads have reached this point, using a sync barrier object.
-	EnterSynchronizationBarrier(&barrier, 0);
-
-
-	if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
-		return ERROR_CODE;
-
-	}
-
-
-	//enter game_loop
-	server_game_loop(accept_socket, &num_of_player, client_name);
-
+	//while thread is still operational, client can enter games.
 	
+	while (1) {
+		if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, &num_of_player, client_name) == ERROR_CODE) {
 
+			return ERROR_CODE;
+		}
+
+		//Connected with a second player!
+		//wait untill both threads have reached this point, using a sync barrier object.
+		EnterSynchronizationBarrier(&barrier, 0);
+
+
+		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
+			return ERROR_CODE;
+
+		}
+
+
+		//enter game_loop
+		server_game_loop(accept_socket, &num_of_player, client_name);
+
+		//game ended for both clients!
+
+		if (ERROR_CODE == initialize_share_resources_to_zero()) {
+
+			return ERROR_CODE;
+
+		}
+	}
 
 	return 1;
 }
@@ -382,7 +391,6 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
-	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
 	int num_of_players_ready_to_play;
 	//read num_of_players_ready_to_play;
@@ -439,6 +447,41 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 
 }
 
+//Should be called before starting a new game
+initialize_share_resources_to_zero() {
+	
+	DWORD dwWaitResult;
+
+	dwWaitResult = WaitForSingleObject(
+		ghMutex,    // handle to mutex
+		INFINITE);  // no time-out interval
+
+	if (dwWaitResult == WAIT_OBJECT_0) {
+
+		resources_struct.game_has_ended = 0;
+		resources_struct.game_number = 0;
+		resources_struct.first_arrived = 0;
+		resources_struct.num_of_players_ready_to_play = 0;
+		resources_struct.current_player_move = NULL;
+
+	}
+
+	else {
+
+		printf("WaitForSingleObject failed in initialize_share_resources_to_zero()\n");
+
+		return ERROR_CODE;
+	}
+
+
+	if (!ReleaseMutex(ghMutex))
+	{
+		printf("Release mutex failed!\n");
+		return ERROR_CODE;
+	}
+	return SUCCESS_CODE;
+
+}
 
 
 

@@ -81,6 +81,8 @@ void main(int argc, char* argv[]) {
 		goto client_cleanup;
 	}
 
+	//while client still wants to play!
+	while(1){
 	//SERVER_APPROVED!
 	//get main menu
 	if (ERROR_CODE== server_main_menu(m_socket, 0)) {
@@ -97,9 +99,9 @@ void main(int argc, char* argv[]) {
 	}
 
 	//game has ended
+	}
 	
 	
-	while (1) {}
 
 client_cleanup:
 
