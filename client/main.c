@@ -42,7 +42,7 @@ int write_from_offset_to_log_file;
 char client_log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE];
 int server_main_menu(SOCKET m_socket, int illegal_command);
 int game_loop(SOCKET m_socket, char* user_name);
-int recv_game_view_or_game_end(SOCKET m_socket);
+int recv_game_view_or_game_end(SOCKET m_socket, int* game_has_ended);
 
 char connection_succeeded_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
 char connection_failed_message[MAX_LENGH_OF_IP_PORT_MESSAGES];
@@ -53,9 +53,8 @@ void main(int argc, char* argv[]) {
 	write_from_offset_to_log_file = 0;
 	get_path_to_log_file(client_log_file_name, argv[3]);
 
+
 	get_connection_succeeded_and_failed_and_server_denied_messages(connection_succeeded_message, connection_failed_message, server_denied_message, argv[1], argv[2]);
-
-
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -97,6 +96,7 @@ void main(int argc, char* argv[]) {
 
 	}
 
+	//game has ended
 	
 	
 	while (1) {}
@@ -327,6 +327,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 int game_loop(SOCKET m_socket, char* user_name) {
 	printf("Game is on!\n");
 
+	int game_has_ended = 0;
 	char* user_input = NULL;
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -375,10 +376,16 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			free(user_input);
 
 			//recv game view and check for game end
-			if (ERROR_CODE == recv_game_view_or_game_end(m_socket)) {
+			if (ERROR_CODE == recv_game_view_or_game_end(m_socket,&game_has_ended)) {
 
 				return ERROR_CODE;
 
+			}
+
+			//if game has_ended, exit game loop.
+			if (game_has_ended == 1) {
+
+				break;
 			}
 		}
 
@@ -389,10 +396,16 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 			//recv game view and check for game end
-			if (ERROR_CODE == recv_game_view_or_game_end(m_socket)) {
+			if (ERROR_CODE == recv_game_view_or_game_end(m_socket,&game_has_ended)) {
 
 				return ERROR_CODE;
 
+			}
+
+			//if game has_ended, exit game loop.
+			if (game_has_ended == 1) {
+				
+				break;
 			}
 
 		}
@@ -402,7 +415,9 @@ int game_loop(SOCKET m_socket, char* user_name) {
 }
 
 
-int recv_game_view_or_game_end(SOCKET m_socket) {
+//first recv game view
+//if parameter was END, wait for GAME_END, and prints the winner.
+int recv_game_view_or_game_end(SOCKET m_socket, int* game_has_ended) {
 
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
@@ -425,7 +440,7 @@ int recv_game_view_or_game_end(SOCKET m_socket) {
 		printf("CONT\n");
 	}
 
-	//Recieved "End"
+	//Recieved "END"
 	else {
 		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
@@ -437,7 +452,7 @@ int recv_game_view_or_game_end(SOCKET m_socket) {
 		printf("%s won!\n", parameters_array[0]);
 		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
-		//needs to go back to main_menu somehow.
+		*game_has_ended = 1;
 		return SUCCESS_CODE;
 
 	}

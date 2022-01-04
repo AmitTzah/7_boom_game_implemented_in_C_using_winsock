@@ -15,8 +15,7 @@
 
 bool containsDigit(int number, int digit);
 int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished);
-int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME]);
-
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]);
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
 extern HANDLE mutex_to_sync_threads_when_waiting_for_players;
@@ -30,7 +29,9 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	int my_client_turn;
 	char other_client_name[MAX_LENGH_OF_CLIENT_NAME];
 	char* p_other_client_name = other_client_name;
-	
+	char winner_name[MAX_LENGH_OF_CLIENT_NAME];
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
+
 	//get other client's name
 	if (*num_of_player == 1) {
 		read_write_common_resources_protected(2, 0, -1, NULL, NULL, &p_other_client_name, -1);
@@ -55,8 +56,16 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	}
 
 	//Loop untill game ends.
-	if (while_game_is_Stil_on(accept_socket, client_name, my_client_turn, other_client_name) == ERROR_CODE) {
+	if (while_game_is_Stil_on(accept_socket, client_name, my_client_turn, other_client_name, winner_name) == ERROR_CODE) {
 
+		return ERROR_CODE;
+
+	}
+
+	//send GAME_ENDED message
+
+	parameters_array[0] = winner_name;
+	if (ERROR_CODE == send_message(accept_socket, GAME_ENDED, parameters_array)) {
 		return ERROR_CODE;
 
 	}
@@ -65,7 +74,7 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 }
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME],int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME],int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]) {
 
 
 	char* communication_message = NULL;
@@ -156,6 +165,12 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 			free(communication_message);
 			free(parameters_array[1]);
 
+			if (game_has_finished == 1) {
+				strcpy_s(winner_name, MAX_LENGH_OF_CLIENT_NAME, other_client_name);
+				//exit game loop, game ended.
+				break;
+			}
+
 		}
 
 		else {
@@ -189,7 +204,11 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 				return ERROR_CODE;
 
 			}
-
+			if (game_has_finished == 1) {
+				//exit game loop, game ended.
+				strcpy_s(winner_name, MAX_LENGH_OF_CLIENT_NAME, client_name);
+				break;
+			}
 
 
 		}

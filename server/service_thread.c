@@ -46,10 +46,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	}
 
 	//Connected with a second player!
-
-
 	//wait untill both threads have reached this point, using a sync barrier object.
-
 	EnterSynchronizationBarrier(&barrier, 0);
 
 
@@ -60,8 +57,9 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 
 	//enter game_loop
-	
 	server_game_loop(accept_socket, &num_of_player, client_name);
+
+	
 
 
 	return 1;
