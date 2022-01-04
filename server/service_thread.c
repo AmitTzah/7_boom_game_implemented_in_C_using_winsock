@@ -25,11 +25,14 @@ extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
 extern HANDLE mutex_to_sync_threads_when_waiting_for_players;
 extern HANDLE event_for_syncing_threads_in_game_loop;
+extern SYNCHRONIZATION_BARRIER barrier;
+
+
 
 DWORD ServiceThread(SOCKET* t_socket) {
 	SOCKET accept_socket = *t_socket;
 	int num_of_player;
-
+	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
 		
 	if (approve_client_request(accept_socket, client_name) == ERROR_CODE) {
@@ -42,8 +45,20 @@ DWORD ServiceThread(SOCKET* t_socket) {
 		return ERROR_CODE;
 	}
 
-
 	//Connected with a second player!
+
+
+	//wait untill both threads have reached this point, using a sync barrier object.
+
+	EnterSynchronizationBarrier(&barrier, 0);
+
+
+	if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
+		return ERROR_CODE;
+
+	}
+
+
 	//enter game_loop
 	
 	server_game_loop(accept_socket, &num_of_player, client_name);
@@ -376,12 +391,6 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 	read_write_common_resources_protected(3, 0, -1, NULL, &num_of_players_ready_to_play, NULL, -1);
 
 	if (num_of_players_ready_to_play == NUM_OF_WORKER_THREADS) {
-
-		
-		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
-			return ERROR_CODE;
-
-		}
 
 		//can start the game, go to game loop
 	}

@@ -34,6 +34,9 @@ HANDLE ghMutex;
 HANDLE mutex_to_sync_threads_when_waiting_for_players;
 HANDLE event_for_syncing_threads_in_game_loop;
 
+//this barrier will be used so have all threads enter the the game loop at the same time.
+SYNCHRONIZATION_BARRIER barrier;
+
 shared_server_resources resources_struct;
 
 int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCKET ThreadInputs[NUM_OF_WORKER_THREADS], SOCKET MainSocket);
@@ -254,6 +257,14 @@ int create_thread_syncing_objects() {
 		printf("CreateMutex error: %d\n", GetLastError());
 		return ERROR_CODE;
 	}
+
+	if (false == InitializeSynchronizationBarrier(&barrier, NUM_OF_WORKER_THREADS, -1)) {
+
+		printf("InitializeSynchronizationBarrier error: %d\n", GetLastError());
+		return ERROR_CODE;
+
+	}
+
 
 
 	return SUCCESS_CODE;
