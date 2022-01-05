@@ -158,7 +158,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	//send CLIENT_REQUEST
 	parameters_array[0] = user_name;
 
-	if (ERROR_CODE == send_message(m_socket, CLIENT_REQUEST, parameters_array)) {
+	if (ERROR_CODE == send_message(m_socket, CLIENT_REQUEST, parameters_array,0, &write_from_offset_to_log_file, client_log_file_name)) {
 		return ERROR_CODE;
 
 	}
@@ -286,7 +286,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	if (strcmp(choice, "1")==0) {
 		//send CLIENT_VERSUS
 		free(choice);
-		if (ERROR_CODE == send_message(m_socket, CLIENT_VERSUS, parameters_array)) {
+		if (ERROR_CODE == send_message(m_socket, CLIENT_VERSUS, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 			return ERROR_CODE;
 
 		}
@@ -342,7 +342,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 
 		//send CLIENT_DISCONNECT
 
-		if (ERROR_CODE == send_message(m_socket, CLIENT_DISCONNECT, parameters_array)) {
+		if (ERROR_CODE == send_message(m_socket, CLIENT_DISCONNECT, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 			return ERROR_CODE;
 
 		}
@@ -406,7 +406,7 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			//send CLIENT_PLAYER_MOVE
 
 			parameters_array[0] = user_input;
-			if (ERROR_CODE == send_message(m_socket, CLIENT_PLAYER_MOVE, parameters_array)) {
+			if (ERROR_CODE == send_message(m_socket, CLIENT_PLAYER_MOVE, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 				return ERROR_CODE;
 			}
 			free(user_input);

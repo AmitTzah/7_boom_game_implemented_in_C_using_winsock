@@ -15,7 +15,9 @@
 
 bool containsDigit(int number, int digit);
 int check_if_move_has_finished_the_game(char* player_guess, int* game_has_finished);
-int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]);
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]
+	                     ,int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]);
+	
 extern shared_server_resources resources_struct;
 extern HANDLE ghMutex;
 extern HANDLE mutex_to_sync_threads_when_waiting_for_players;
@@ -24,7 +26,7 @@ extern HANDLE event_for_syncing_threads_in_game_loop;
 
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]) {
 	
 	int my_client_turn;
 	char other_client_name[MAX_LENGH_OF_CLIENT_NAME];
@@ -56,7 +58,7 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	}
 
 	//Loop untill game ends.
-	if (while_game_is_Stil_on(accept_socket, client_name, my_client_turn, other_client_name, winner_name) == ERROR_CODE) {
+	if (while_game_is_Stil_on(accept_socket, client_name, my_client_turn, other_client_name, winner_name, write_from_offset_to_log_file, thread_log_file_name) == ERROR_CODE) {
 
 		return ERROR_CODE;
 
@@ -65,7 +67,7 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 	//send GAME_ENDED message
 
 	parameters_array[0] = winner_name;
-	if (ERROR_CODE == send_message(accept_socket, GAME_ENDED, parameters_array)) {
+	if (ERROR_CODE == send_message(accept_socket, GAME_ENDED, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 		return ERROR_CODE;
 
 	}
@@ -74,7 +76,8 @@ int server_game_loop(SOCKET accept_socket, int* num_of_player, char client_name[
 }
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME],int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME],int my_client_turn, char other_client_name[MAX_LENGH_OF_CLIENT_NAME], char winner_name[MAX_LENGH_OF_CLIENT_NAME]
+						  ,int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]) {
 
 
 	char* communication_message = NULL;
@@ -89,13 +92,13 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 
 			//Send turn switch to client with this client's name.
 			parameters_array[0] = client_name;
-			if (ERROR_CODE == send_message(accept_socket, TURN_SWITCH, parameters_array)) {
+			if (ERROR_CODE == send_message(accept_socket, TURN_SWITCH, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 				return ERROR_CODE;
 
 			}
 
 			//Ask client for move
-			if (ERROR_CODE == send_message(accept_socket, SERVER_MOVE_REQUEST, parameters_array)) {
+			if (ERROR_CODE == send_message(accept_socket, SERVER_MOVE_REQUEST, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 				return ERROR_CODE;
 
 			}
@@ -167,7 +170,7 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 				parameters_array[2] = "CONT";
 			}
 
-			if (ERROR_CODE == send_message(accept_socket, GAME_VIEW, parameters_array)) {
+			if (ERROR_CODE == send_message(accept_socket, GAME_VIEW, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 				return ERROR_CODE;
 
 			}
@@ -189,7 +192,7 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 
 			//Send turn switch to client with this client's name.
 			parameters_array[0] = other_client_name;
-			if (ERROR_CODE == send_message(accept_socket, TURN_SWITCH, parameters_array)) {
+			if (ERROR_CODE == send_message(accept_socket, TURN_SWITCH, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 				return ERROR_CODE;
 
 			}
@@ -210,7 +213,7 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 				parameters_array[2] = "CONT";
 			}
 
-			if (ERROR_CODE == send_message(accept_socket, GAME_VIEW, parameters_array)) {
+			if (ERROR_CODE == send_message(accept_socket, GAME_VIEW, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 				return ERROR_CODE;
 
 			}

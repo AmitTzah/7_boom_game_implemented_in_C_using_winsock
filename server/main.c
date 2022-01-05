@@ -232,12 +232,17 @@ int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCK
 
 			//send back SERVER_DENIED
 
-			if (ERROR_CODE == send_message(AcceptSocket, SERVER_DENIED, parameters_array)) {
+			char* communication_message = NULL;
+			if (ERROR_CODE == format_communication_message(SERVER_DENIED, parameters_array, &communication_message)) {
 				return ERROR_CODE;
-
 			}
 
+			if (SendBuffer(communication_message, get_size_of_communication_message(communication_message), AcceptSocket) == TRNS_FAILED) {
+				printf("Failed to send messeage!\n");
+				return ERROR_CODE;
+			}
 
+			free(communication_message);
 			closesocket(AcceptSocket);
 
 		}

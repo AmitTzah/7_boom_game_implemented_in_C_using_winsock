@@ -14,11 +14,11 @@
 #include "server_game_loop.h"
 
 
-int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-
+int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]);
+int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]);
 int check_if_player_connected_first_and_update_num_of_players(int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
-int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]);
+int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]);
+
 int initialize_share_resources_to_zero();
 
 extern shared_server_resources resources_struct;
@@ -35,8 +35,11 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char client_name[MAX_LENGH_OF_CLIENT_NAME];
 
+	int write_from_offset_to_log_file = 0;
+	char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME];
+
 		
-	if (approve_client_request(accept_socket, client_name) == ERROR_CODE) {
+	if (approve_client_request(accept_socket, client_name, &write_from_offset_to_log_file, thread_log_file_name) == ERROR_CODE) {
 
 		return ERROR_CODE;
 	}
@@ -44,7 +47,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	//while thread is still operational, client can enter games.
 	
 	while (1) {
-		if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, &num_of_player, client_name) == ERROR_CODE) {
+		if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, &num_of_player, client_name, &write_from_offset_to_log_file, thread_log_file_name) == ERROR_CODE) {
 
 			goto thread_cleanup;
 
@@ -55,14 +58,14 @@ DWORD ServiceThread(SOCKET* t_socket) {
 		EnterSynchronizationBarrier(&barrier, 0);
 
 
-		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array)) {
+		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array, 1, &write_from_offset_to_log_file, thread_log_file_name)) {
 			goto thread_cleanup;
 
 		}
 
 
 		//enter game_loop
-		if (ERROR_CODE == server_game_loop(accept_socket, &num_of_player, client_name)) {
+		if (ERROR_CODE == server_game_loop(accept_socket, &num_of_player, client_name, &write_from_offset_to_log_file, thread_log_file_name)) {
 
 			goto thread_cleanup;
 
@@ -81,12 +84,13 @@ thread_cleanup:
 
 	printf("Player disconnected. Exiting.\n");
 	//write to log file
+	return 1;
 
 }
 
 //get client request, extract username into the argument client_name, send back SERVER_APPROVED.
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
@@ -98,11 +102,15 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 
 	}
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
+	strcpy_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, "thread_log_");
+	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, client_name);
+	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, ".txt");
+
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 	//send back SERVER_APPROVED
 
-	if (ERROR_CODE == send_message(accept_socket, SERVER_APPROVED, parameters_array)) {
+	if (ERROR_CODE == send_message(accept_socket, SERVER_APPROVED, parameters_array,1, write_from_offset_to_log_file, thread_log_file_name)) {
 		return ERROR_CODE;
 
 	}
@@ -113,7 +121,7 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 
 
 //if some api api function fails, return ERROR_CODE, otherwise 0. 
-int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]) {
 	char* communication_message = NULL;
 	char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS];
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
@@ -121,7 +129,7 @@ int send_main_menu_to_client_and_try_to_connect_with_another_player(SOCKET accep
 
 	//send main menu message to client
 
-if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array)) {
+if (ERROR_CODE == send_message(accept_socket, SERVER_MAIN_MENU, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 	return ERROR_CODE;
 
 }
@@ -169,7 +177,7 @@ if (num_of_players_ready_to_play == 1) {
 }
 
 //if 2 players are ready
-return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name);
+return check_if_two_players_are_ready_to_play_protected(accept_socket, num_of_player, client_name, write_from_offset_to_log_file, thread_log_file_name);
 
 }
 
@@ -394,7 +402,7 @@ int check_if_player_connected_first_and_update_num_of_players(int* num_of_player
 
 //this function checks if two threads are ready to play.
 //If no, calls revursively to send_main_menu_to_client_and_try_to_connect_with_another_player()
-int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME]) {
+int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* num_of_player, char client_name[MAX_LENGH_OF_CLIENT_NAME], int* write_from_offset_to_log_file, char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME]) {
 
 	DWORD dwWaitResult;
 
@@ -417,7 +425,7 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 	}
 	else {
 
-		if (ERROR_CODE == send_message(accept_socket, SERVER_NO_OPPONENTS, parameters_array)) {
+		if (ERROR_CODE == send_message(accept_socket, SERVER_NO_OPPONENTS, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 			//num_of_players_ready_to_play--
 			read_write_common_resources_protected(3, 1, -1, NULL, NULL, NULL, 1);
 
@@ -438,7 +446,7 @@ int check_if_two_players_are_ready_to_play_protected(SOCKET accept_socket, int* 
 			printf("Release mutex failed!");
 			return ERROR_CODE;
 		}
-		return send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, num_of_player, client_name);
+		return send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, num_of_player, client_name, write_from_offset_to_log_file, thread_log_file_name);
 	}
 
 	}

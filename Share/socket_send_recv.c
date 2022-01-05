@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-
+#include "file_IO.h"
 
 
 
@@ -335,7 +335,8 @@ int recv_and_extract_communication_message(SOCKET sd, char** communication_messa
 //Top wrapper sender function
 //it formats the message according to given arguments, sends it.
 //if memory allocation or an api function fail, it returns ERROR_CODE.
-int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
+//also prints message to log file with the correct foramt, depending on if server or client.(passed by argument client_or_server).
+int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS],int client_or_server, int* write_from_offset, char log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE]) {
 
 	char* communication_message = NULL;
 	if (ERROR_CODE == format_communication_message(messeage_type, parameters_array,& communication_message)) {
@@ -347,8 +348,27 @@ int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MA
 		return ERROR_CODE;
 	}
 
-	printf("Sent message: %s", communication_message);
-	//TODO: replace printf with write to log file
+
+	//Sent from client. Write to client_log
+	if (client_or_server == 0) {
+	
+		WinWriteToFile(log_file_name, "sent to server-", strlen("sent to server-"), *write_from_offset);
+		*write_from_offset += strlen("sent to server-");
+		WinWriteToFile(log_file_name, communication_message, get_size_of_communication_message(communication_message), *write_from_offset);
+		*write_from_offset += get_size_of_communication_message(communication_message);
+
+	}
+	//Sent from server. Write to thread_server_log
+
+	else {
+		WinWriteToFile(log_file_name, "sent to client-", strlen("sent to client-"), *write_from_offset);
+		*write_from_offset += strlen("sent to client-");
+
+		WinWriteToFile(log_file_name, communication_message, get_size_of_communication_message(communication_message), *write_from_offset);
+		*write_from_offset += get_size_of_communication_message(communication_message);
+
+	}
+
 	free(communication_message);
 
 	return(SUCCESS_CODE);
