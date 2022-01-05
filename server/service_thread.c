@@ -37,7 +37,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 	int write_from_offset_to_log_file = 0;
 	char thread_log_file_name[MAX_LENGTH_OF_THREAD_LOG_FILE_NAME];
-
+	int error = 0;
 		
 	if (approve_client_request(accept_socket, client_name, &write_from_offset_to_log_file, thread_log_file_name) == ERROR_CODE) {
 
@@ -48,7 +48,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 	
 	while (1) {
 		if (send_main_menu_to_client_and_try_to_connect_with_another_player(accept_socket, &num_of_player, client_name, &write_from_offset_to_log_file, thread_log_file_name) == ERROR_CODE) {
-
+			error = 1;
 			goto thread_cleanup;
 
 		}
@@ -59,6 +59,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 
 		if (ERROR_CODE == send_message(accept_socket, GAME_STARTED, parameters_array, 1, &write_from_offset_to_log_file, thread_log_file_name)) {
+			error = 1;
 			goto thread_cleanup;
 
 		}
@@ -67,6 +68,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 		//enter game_loop
 		if (ERROR_CODE == server_game_loop(accept_socket, &num_of_player, client_name, &write_from_offset_to_log_file, thread_log_file_name)) {
 
+			error = 1;
 			goto thread_cleanup;
 
 		}
@@ -75,6 +77,7 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 		if (ERROR_CODE == initialize_share_resources_to_zero()) {
 
+			error = 1;
 			goto thread_cleanup;
 
 		}
@@ -82,9 +85,17 @@ DWORD ServiceThread(SOCKET* t_socket) {
 
 thread_cleanup:
 
-	printf("Player disconnected. Exiting.\n");
-	//write to log file
-	return 1;
+
+	if (error == 1) {
+
+		printf("Player disconnected. Exiting.\n");
+		//write to log file
+		WinWriteToFile(thread_log_file_name, "Player disconnected. Exiting.\n" , strlen("Player disconnected. Exiting.\n"), write_from_offset_to_log_file);
+		write_from_offset_to_log_file += strlen("Player disconnected. Exiting.\n");
+
+		return ERROR_CODE;
+	}
+	return SUCCESS_CODE;
 
 }
 

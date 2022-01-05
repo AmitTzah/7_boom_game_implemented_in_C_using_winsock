@@ -120,8 +120,6 @@ int main(int argc, char* argv[]) {
 	for (int Ind = 0; Ind < NUM_OF_WORKER_THREADS; Ind++)
 		ThreadHandles[Ind] = NULL;
 
-	printf("Waiting for a client to connect...\n");
-
 	if (create_thread_syncing_objects() == ERROR_CODE) {
 		goto server_cleanup;
 	}
@@ -374,7 +372,9 @@ void cleanup_worker_threads_and_sockets(HANDLE ThreadHandles[NUM_OF_WORKER_THREA
 		if (ThreadHandles[Ind] != NULL)
 		{
 			
-				closesocket(ThreadInputs[Ind]);
+			if (ERROR_CODE == closesocket(ThreadInputs[Ind])) {
+				printf("error %ld at closesocket( )\n", WSAGetLastError());
+				}
 				CloseHandle(ThreadHandles[Ind]);
 				ThreadHandles[Ind] = NULL;
 			

@@ -63,7 +63,9 @@ int main(int argc, char* argv[]) {
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
-		goto client_cleanup;
+
+		//nothing to free yet, can simply exit.
+		return ERROR_CODE;
 	}
 
 	SOCKET m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -113,11 +115,13 @@ int main(int argc, char* argv[]) {
 	
 
 client_cleanup:
-
+	if (SOCKET_ERROR == closesocket(m_socket)) {
+		printf("error %ld at closesocket( )\n", WSAGetLastError());
+	}
 	
 	result = WSACleanup();
 	if (result != NO_ERROR) {
-		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
+		printf("error %ld at WSACleanup( )\n", WSAGetLastError());
 	}
 
 	return SUCCESS_CODE;
@@ -267,8 +271,6 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 	// recv main menu message
 	if (illegal_command != 1) {
 		
-		printf("client waiting for main menue message...\n");
-
 		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 			return ERROR_CODE;
