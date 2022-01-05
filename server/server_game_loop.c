@@ -109,7 +109,7 @@ int while_game_is_Stil_on(SOCKET accept_socket, char client_name[MAX_LENGH_OF_CL
 
 
 			//Recv from client CLIENT_PLAYER_MOVE
-			if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+			if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 
 				return ERROR_CODE;
 

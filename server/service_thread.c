@@ -96,15 +96,31 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 	char message_type[MAX_LENGH_OF_MESSAGE_TYPE];
 
 	//first get the CLIENT_REQUEST
-	if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+	init_parameter_array(parameters_array);
 
+	if (recv_communication_message(accept_socket, &communication_message) == TRNS_FAILED)
+	{
+		printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
 		return ERROR_CODE;
 
 	}
+
+	if (ERROR_CODE == extract_parameters_from_communication_message(communication_message, parameters_array, message_type)) {
+
+		return ERROR_CODE;
+	}
+
+	//get the thread_log_file_name
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
 	strcpy_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, "thread_log_");
 	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, client_name);
 	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, ".txt");
+
+	//print to file
+	WinWriteToFile(thread_log_file_name, "received from client-", strlen("received from client-"), *write_from_offset_to_log_file);
+	*write_from_offset_to_log_file += strlen("received from client-");
+	WinWriteToFile(thread_log_file_name, communication_message, get_size_of_communication_message(communication_message), *write_from_offset_to_log_file);
+	*write_from_offset_to_log_file += get_size_of_communication_message(communication_message);
 
 	free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
@@ -139,7 +155,7 @@ set_time_out_to_recv_calls(accept_socket, INFINITE);
 
 //recv CLIENT_DISCONNECT or CLIENT_VERSUS
 
-if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array)) {
+if (ERROR_CODE == recv_and_extract_communication_message(accept_socket, &communication_message, message_type, parameters_array, 1, write_from_offset_to_log_file, thread_log_file_name)) {
 
 	return ERROR_CODE;
 

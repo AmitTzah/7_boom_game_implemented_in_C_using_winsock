@@ -257,7 +257,8 @@ int extract_parameters_from_communication_message(char* communication_message, c
 
 		}
 
-
+		//The warning here is a false alarm(checked multiple times). static analyzer can make mistakes!
+		//https://stackoverflow.com/questions/56057025/how-could-this-buffer-be-overrun
 		parameters_array[parameter_index][j] = '\0';
 	}
 
@@ -309,7 +310,10 @@ void init_parameter_array(char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS])
 //message_type is statically allocated. 
 //parameters_array and communication_message will be allocated on heap as needed, thus should be freed in caller  with free_communication_message_and_parameters;
 //if memory allocation or an api function fail, it returns ERROR_CODE.
-int recv_and_extract_communication_message(SOCKET sd, char** communication_message, char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]) {
+//also prints message to log file with the correct foramt, depending on if server or client.(passed by argument client_or_server).
+
+int recv_and_extract_communication_message(SOCKET sd, char** communication_message, char* messeage_type, char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS], int client_or_server,
+										int* write_from_offset, char log_file_name[MAX_LENGTH_OF_PATH_TO_A_FILE]) {
 	*communication_message = NULL;
 	init_parameter_array(parameters_array);
 
@@ -319,8 +323,27 @@ int recv_and_extract_communication_message(SOCKET sd, char** communication_messa
 		return ERROR_CODE;
 
 	}
-	printf("Recevied message: %s\n", *communication_message);
-	//TODO: write to log file instead of printing to screen.
+
+	//Received in client. Write to client_log
+	if (client_or_server == 0) {
+
+		WinWriteToFile(log_file_name, "received from server-", strlen("received from server-"), *write_from_offset);
+		*write_from_offset += strlen("received from server-");
+		WinWriteToFile(log_file_name, *communication_message, get_size_of_communication_message(*communication_message), *write_from_offset);
+		*write_from_offset += get_size_of_communication_message(*communication_message);
+
+	}
+	//Received in server. Write to thread_server_log
+
+	else {
+		WinWriteToFile(log_file_name, "received from client-", strlen("received from client-"), *write_from_offset);
+		*write_from_offset += strlen("received from client-");
+		WinWriteToFile(log_file_name, *communication_message, get_size_of_communication_message(*communication_message), *write_from_offset);
+		*write_from_offset += get_size_of_communication_message(*communication_message);
+
+	}
+
+
 
 	if (ERROR_CODE == extract_parameters_from_communication_message(*communication_message, parameters_array, messeage_type)) {
 

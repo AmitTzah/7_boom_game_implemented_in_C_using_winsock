@@ -164,7 +164,7 @@ int establish_a_connection_with_server(SOCKET m_socket, char* ip, char* port, ch
 	}
 
 	// recv SERVER_DENIED or SERVER_APPROVED
-	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 		return ERROR_CODE;
 
@@ -269,7 +269,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 		
 		printf("client waiting for main menue message...\n");
 
-		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 			return ERROR_CODE;
 
@@ -304,7 +304,7 @@ int server_main_menu(SOCKET m_socket, int illegal_command) {
 		
 
 		//receive GAME_STARTED or server_no_opponents
-		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 			return ERROR_CODE;
 
@@ -373,7 +373,7 @@ int game_loop(SOCKET m_socket, char* user_name) {
 	while (1) {
 
 		//receive TURN_SWITCH
-		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 			return ERROR_CODE;
 
@@ -384,7 +384,7 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 			//receive SERVER_MOVE_REQUEST
-			if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+			if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 				return ERROR_CODE;
 			}
@@ -461,7 +461,7 @@ int recv_game_view_or_game_end(SOCKET m_socket, int* game_has_ended) {
 
 	//recv game_view
 
-	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+	if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 		return ERROR_CODE;
 	}
@@ -481,7 +481,7 @@ int recv_game_view_or_game_end(SOCKET m_socket, int* game_has_ended) {
 		free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
 		//recv game_ended
-		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array)) {
+		if (ERROR_CODE == recv_and_extract_communication_message(m_socket, &communication_message, message_type, parameters_array, 0, &write_from_offset_to_log_file, client_log_file_name)) {
 
 			return ERROR_CODE;
 		}

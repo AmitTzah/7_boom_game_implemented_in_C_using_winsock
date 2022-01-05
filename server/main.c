@@ -219,12 +219,21 @@ int accept_or_deny_connections(HANDLE ThreadHandles[NUM_OF_WORKER_THREADS], SOCK
 		if (Ind == NUM_OF_WORKER_THREADS)
 		{
 			//first get the CLIENT_REQUEST
-			if (ERROR_CODE == recv_and_extract_communication_message(AcceptSocket, &communication_message, message_type, parameters_array)) {
 
+			communication_message = NULL;
+			init_parameter_array(parameters_array);
+
+			if (recv_communication_message(AcceptSocket, &communication_message) == TRNS_FAILED)
+			{
+				printf("Error occuerd in server receving data, error num : % ld\n", WSAGetLastError());
 				return ERROR_CODE;
 
 			}
 
+			if (ERROR_CODE == extract_parameters_from_communication_message(communication_message, parameters_array, message_type)) {
+
+				return ERROR_CODE;
+			}
 
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
