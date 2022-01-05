@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 	SOCKADDR_IN service;
 	int bindRes;
 	int ListenRes;
-
+	int error = 0;
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 	 
@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
 	if (MainSocket == INVALID_SOCKET)
 	{
 		printf("Error at socket( ): %ld\n", WSAGetLastError());
+		error = 1;
 		goto server_cleanup;
 	}
 
@@ -93,6 +94,7 @@ int main(int argc, char* argv[]) {
 	{
 		printf("The string \"%s\" cannot be converted into an ip address. ending program.\n",
 			SERVER_ADDRESS_STR);
+		error = 1;
 		goto server_cleanup;
 	}
 
@@ -105,6 +107,7 @@ int main(int argc, char* argv[]) {
 	if (bindRes == SOCKET_ERROR)
 	{
 		printf("bind( ) failed with error %ld. Ending program\n", WSAGetLastError());
+		error = 1;
 		goto server_cleanup;
 	}
 
@@ -113,6 +116,7 @@ int main(int argc, char* argv[]) {
 	if (ListenRes == SOCKET_ERROR)
 	{
 		printf("Failed listening on socket, error %ld.\n", WSAGetLastError());
+		error = 1;
 		goto server_cleanup;
 	}
 
@@ -121,6 +125,7 @@ int main(int argc, char* argv[]) {
 		ThreadHandles[Ind] = NULL;
 
 	if (create_thread_syncing_objects() == ERROR_CODE) {
+		error = 1;
 		goto server_cleanup;
 	}
 
@@ -129,7 +134,7 @@ int main(int argc, char* argv[]) {
 
 
 	if (accept_or_deny_connections(ThreadHandles, ThreadInputs, MainSocket) == ERROR_CODE) {
-
+		error = 1;
 		goto server_cleanup;
 
 	}
@@ -154,6 +159,10 @@ server_cleanup:
 		printf("error %ld at WSACleanup( ), ending program.\n", WSAGetLastError());
 	}
 
+	if (error == 1) {
+
+		return ERROR_CODE;
+	}
 	return SUCCESS_CODE;
 
 }

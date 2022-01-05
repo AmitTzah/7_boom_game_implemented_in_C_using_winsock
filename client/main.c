@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
 	WSADATA wsaData;
 	int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	int result;
+	int error = 0;
+
 	if (StartupRes != NO_ERROR)
 	{
 		printf("error %ld at WSAStartup( ), ending program.\n", WSAGetLastError());
@@ -72,6 +74,8 @@ int main(int argc, char* argv[]) {
 
 	if (m_socket == INVALID_SOCKET) {
 		printf("Error at socket(): %ld\n", WSAGetLastError());
+
+		error = 1;
 		goto client_cleanup;
 
 	}
@@ -82,6 +86,8 @@ int main(int argc, char* argv[]) {
 	int OptLen = sizeof(int);
 	if (setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
 		printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
+
+		error = 1;
 		goto client_cleanup;
 
 	}
@@ -89,6 +95,7 @@ int main(int argc, char* argv[]) {
 	//Attempt to connect with server
 	if (ERROR_CODE == establish_a_connection_with_server(m_socket, argv[1], argv[2], argv[3])) {
 		//failed to connect or server denied
+		error = 1;
 		goto client_cleanup;
 	}
 
@@ -98,13 +105,14 @@ int main(int argc, char* argv[]) {
 	//get main menu
 	if (ERROR_CODE== server_main_menu(m_socket, 0)) {
 		//Chose to quit or some api function failed.
+		error = 1;
 		goto client_cleanup;
 	}
 	
 	//Received game_started	
 	//Start the game loop
 	if (ERROR_CODE == game_loop(m_socket, argv[3])) {
-
+		error = 1;
 		goto client_cleanup;
 
 	}
@@ -122,6 +130,11 @@ client_cleanup:
 	result = WSACleanup();
 	if (result != NO_ERROR) {
 		printf("error %ld at WSACleanup( )\n", WSAGetLastError());
+	}
+	if (error == 1) {
+
+		return ERROR_CODE;
+
 	}
 
 	return SUCCESS_CODE;
