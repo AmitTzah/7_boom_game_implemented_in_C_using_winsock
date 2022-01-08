@@ -30,4 +30,7 @@ int format_communication_message(const char* messeage_type, char* parameters_arr
 void init_parameter_array(char* parameters_array[MAX_NUM_OF_MESSAGE_PARAMETERS]);
 
 TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
+
+int set_time_out_to_recv_calls(SOCKET accept_socket, int timeout);
+
 #endif

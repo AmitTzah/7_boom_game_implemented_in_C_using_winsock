@@ -397,3 +397,24 @@ int send_message(SOCKET sd, const char* messeage_type, char* parameters_array[MA
 	return(SUCCESS_CODE);
 
 }
+
+//used to change timeout to inifinte when waiting for user input. And then configure back to 15000ms
+// timeout is in miliseconds
+//if some api api function fails, return ERROR_CODE, otherwise 0. 
+int set_time_out_to_recv_calls(SOCKET accept_socket, int timeout) {
+
+
+	//configure socket to timeout recv calls after WAIT_FOR_RESPONSE ms
+	int OptVal = timeout;
+	int OptLen = sizeof(int);
+	if (setsockopt(accept_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
+		printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
+		return ERROR_CODE;
+
+	}
+
+	return SUCCESS_CODE;
+
+
+}
+

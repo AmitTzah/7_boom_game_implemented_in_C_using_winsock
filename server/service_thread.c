@@ -123,7 +123,7 @@ int approve_client_request(SOCKET accept_socket, char client_name[MAX_LENGH_OF_C
 
 	//get the thread_log_file_name
 	strcpy_s(client_name, MAX_LENGH_OF_CLIENT_NAME, parameters_array[0]);
-	strcpy_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, "thread_log_");
+	strcpy_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, "Thread_log_");
 	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, client_name);
 	strcat_s(thread_log_file_name, MAX_LENGTH_OF_THREAD_LOG_FILE_NAME, ".txt");
 
@@ -533,25 +533,5 @@ int initialize_share_resources_to_zero() {
 
 }
 
-
-//used to change timeout to inifinte when waiting for user input. And then configure back to 15000ms
-// timeout is in miliseconds
-//if some api api function fails, return ERROR_CODE, otherwise 0. 
-int set_time_out_to_recv_calls(SOCKET accept_socket, int timeout) {
-
-
-	//configure socket to timeout recv calls after WAIT_FOR_RESPONSE ms
-	int OptVal = timeout;
-	int OptLen = sizeof(int);
-	if (setsockopt(accept_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&OptVal, OptLen) == SOCKET_ERROR) {
-		printf("setsockopt for SO_RCVTIMEO failed with error: %u\n", WSAGetLastError());
-		return ERROR_CODE;
-
-	}
-
-	return SUCCESS_CODE;
-
-
-}
 
 

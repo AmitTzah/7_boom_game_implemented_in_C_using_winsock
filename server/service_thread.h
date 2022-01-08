@@ -31,6 +31,5 @@ DWORD ServiceThread(SOCKET* t_socket);
 int read_write_common_resources_protected(int index_of_parameter_to_access, int read_or_write, int int_data_to_write, char* name_str_to_write, int* int_read,
 	char** name_str_read, int increase_or_decrease_by_one);
 
-int set_time_out_to_recv_calls(SOCKET accept_socket, int timeout);
 
 #endif

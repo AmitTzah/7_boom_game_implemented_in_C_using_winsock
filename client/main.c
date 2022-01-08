@@ -446,12 +446,19 @@ int game_loop(SOCKET m_socket, char* user_name) {
 			printf("%s\'s turn!\n", parameters_array[0]);
 			free_communication_message_and_parameters(communication_message, parameters_array, message_type);
 
+			// wait for user response infinite time.
+			set_time_out_to_recv_calls(m_socket, INFINITE);
+
 			//recv game view and check for game end
 			if (ERROR_CODE == recv_game_view_or_game_end(m_socket,&game_has_ended)) {
 
 				return ERROR_CODE;
 
 			}
+
+			//reconfigure back to 15000 ms
+			set_time_out_to_recv_calls(m_socket, WAIT_FOR_RESPONSE);
+
 
 			//if game has_ended, exit game loop.
 			if (game_has_ended == 1) {
